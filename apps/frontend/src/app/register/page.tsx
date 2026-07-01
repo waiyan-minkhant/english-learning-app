@@ -1,0 +1,95 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { SubmitEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { RedirectIfAuthenticated } from "@/components/redirect-if-authenticated";
+import { registerRequest } from "@/lib/api";
+import { registerRequestSchema, type LoginRequest } from "@/lib/auth";
+
+export default function RegisterPage() {
+  return (
+    <RedirectIfAuthenticated fallback={<main className="p-6">Loading...</main>}>
+      <RegisterForm />
+    </RedirectIfAuthenticated>
+  );
+}
+
+function RegisterForm() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const payload: LoginRequest = { email, password };
+    const parsed = registerRequestSchema.safeParse(payload);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Invalid input");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await registerRequest(parsed.data);
+      router.push("/dashboard");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error ? submitError.message : "Registration failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-6">
+      <form onSubmit={onSubmit} className="w-full space-y-4 rounded-lg border p-6">
+        <h1 className="text-2xl font-semibold">Register</h1>
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-10 w-full rounded-md border px-3"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="h-10 w-full rounded-md border px-3"
+            required
+            minLength={8}
+          />
+        </div>
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <Button type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Register"}
+        </Button>
+        <p className="text-sm text-slate-600">
+          Already have an account?{" "}
+          <Link href="/login" className="underline">
+            Login
+          </Link>
+        </p>
+      </form>
+    </main>
+  );
+}

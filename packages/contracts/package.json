@@ -1,0 +1,20 @@
+{
+  "name": "@english-learning/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./auth.contract.ts",
+  "types": "./auth.contract.ts",
+  "exports": {
+    ".": "./auth.contract.ts",
+    "./class": "./class.contract.ts",
+    "./realtime": "./realtime.contract.ts",
+    "./session": "./session.contract.ts",
+    "./video": "./video.contract.ts",
+    "./socket/events": "./socket/events.ts",
+    "./socket/schema": "./socket/schema.ts"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

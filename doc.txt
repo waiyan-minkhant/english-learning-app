@@ -1,0 +1,189 @@
+
+// SHARED CONTRACTS (FOR TYPE SAFETY AND RUNTIME VALIDATION FOR BOTH FRONTEND AND BACKEND)
+
+Shared Zod Schema
+       ↓
+Frontend infers TS types
+       ↓
+Frontend sends payload
+       ↓
+Backend validates runtime payload
+       ↓
+Service executes safely
+
+You define data shape:
+
+ONCE
+
+Then:
+
+frontend derives types
+backend validates runtime payloads
+
+No duplication.
+
+
+// PURPOSE OF SHARED CONTRACTS
+socket payload schemas
+REST DTO schemas
+event shapes
+
+// PURPOSE OF MODULE VALIDATORS
+permission guards
+state transition checks
+session invariants
+moderator-only actions
+
+
+// LIVEKIT LIVE VIDEO CALL — FLOW SUMMARY
+
+Overview
+--------
+Live video uses LiveKit Cloud for WebRTC media. The Next.js app and Express API
+can run anywhere; only the browser connects to LiveKit for audio/video.
+
+Components
+----------
+- LiveKit Cloud (Build plan): media server at LIVEKIT_URL / NEXT_PUBLIC_LIVEKIT_URL
+- apps/api: mints short-lived LiveKit JWTs (POST /livekit/token)
+- apps/frontend: fetches token, joins room via @livekit/components-react
+
+Environment variables
+---------------------
+API (apps/api/.env):
+  LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL
+  JWT_SECRET, FRONTEND_URL, DATABASE_URL
+
+Frontend (apps/frontend/.env.local):
+  NEXT_PUBLIC_API_URL
+  NEXT_PUBLIC_LIVEKIT_URL
+
+Never expose LIVEKIT_API_SECRET to the client.
+
+End-to-end flow
+---------------
+1. User registers or logs in via POST /auth/register or POST /auth/login.
+   API sets httpOnly cookie "accessToken" (app JWT).
+
+2. User opens Dashboard (/dashboard).
+   Frontend calls GET /auth/me with credentials: "include" to confirm session.
+
+3. User creates or joins a room:
+   - Create: navigates to /call/{roomId} (e.g. room-a1b2c3d4)
+   - Join: enters room name on dashboard, navigates to /call/{roomName}
+
+4. Call page (/call/[roomId]):
+   a. GET /auth/me — must be logged in; else redirect to /login
+   b. POST /livekit/token { roomName } with auth cookie
+   c. API verifies app JWT, validates roomName (shared Zod contract)
+   d. API creates LiveKit access token (identity = user.id, name = user.email)
+      grants: roomJoin, canPublish, canSubscribe for that room
+   e. API returns { token, url, roomName }
+   f. Frontend connects LiveKitRoom to NEXT_PUBLIC_LIVEKIT_URL with token
+   g. VideoConference UI shows local/remote participants
+
+5. Second user (another browser, must be logged in):
+   Opens same /call/{roomName} URL → same flow → both in same LiveKit room.
+
+6. Leave: user clicks Leave or disconnects → returns to /dashboard.
+
+API routes added
+------------------
+POST /livekit/token
+  Auth: required (accessToken cookie)
+  Body: { roomName: string }  (alphanumeric, hyphen, underscore; max 64)
+  Response: { token, url, roomName }
+
+Files (Phase 4 — API)
+---------------------
+packages/contracts/livekit.contract.ts     — request/response Zod schemas
+apps/api/src/lib/livekit.ts                — createLiveKitToken()
+apps/api/src/modules/livekit/routes/livekit.routes.ts
+apps/api/src/index.ts                      — app.use("/livekit", livekitRouter)
+
+Files (Phase 5 — Frontend)
+--------------------------
+apps/frontend/src/lib/livekit.ts           — parseLivekitTokenResponse
+apps/frontend/src/lib/api.ts               — getLiveKitToken()
+apps/frontend/src/components/call-room.tsx — LiveKitRoom + VideoConference
+apps/frontend/src/app/call/[roomId]/page.tsx
+apps/frontend/src/app/dashboard/page.tsx   — create/join room UI
+
+Local test checklist
+--------------------
+1. docker compose up -d (Postgres) in apps/api
+2. pnpm dev in apps/api (port 4000)
+3. pnpm dev in apps/frontend (port 3000)
+4. Register two users (normal + incognito)
+5. User A: Dashboard → Create new room
+6. Copy room name from URL, User B: Dashboard → Join room
+7. Allow camera/mic in both browsers
+
+Security notes (MVP)
+--------------------
+- Only authenticated users receive LiveKit tokens.
+- Room access is not yet restricted in DB (any logged-in user can join any
+  room name they know). Add room membership checks before production.
+- LiveKit API secret stays server-side only.
+
+
+// COLLABORATIVE CURSOR (SOCKET.IO) — LESSON CANVAS
+
+Overview
+--------
+Remote cursors on the call page left section (lesson canvas). Positions are
+shared over Socket.IO; LiveKit is not involved. Works with Redis Socket.IO
+adapter for multi-instance API horizontal scaling.
+
+End-to-end flow
+---------------
+1. User moves mouse over the lesson canvas (full left panel).
+2. Client throttles to ~20 FPS (50 ms) and skips moves under 3 px (pixel space).
+3. Client converts pointer to normalized coordinates in [0, 1] relative to the
+   canvas element bounding rect (not the browser window).
+4. Client emits move_cursor { sessionId, x, y }.
+5. API validates payload (Zod: x/y in [0, 1]), checks socket is in that session.
+6. API relays with socket.to(sessionId).emit("cursor_moved", { sessionId, userId, x, y })
+   — sender is excluded from this broadcast (no server echo).
+7. Other clients receive cursor_moved, set targetX/targetY on a per-user cursor model.
+8. requestAnimationFrame loop interpolates: x += (targetX - x) * 0.2 (same for y).
+9. Remote cursors render as SVG pointer + label on an overlay (pointer-events: none).
+
+Design decisions
+----------------
+Normalized [0, 1] coordinates
+  - Same logical position when users have different screen sizes, zoom, or when
+    the video sidebar is opened/closed (canvas width changes).
+  - Stored and validated in packages/contracts/socket/schema.ts.
+
+Throttle 50 ms (~20 FPS)
+  - Limits socket traffic; smooth enough for collaboration MVP.
+
+Distance threshold 3 px (before normalize)
+  - Applied in pixel space inside the canvas rect to ignore micro-jitter.
+
+socket.to(roomId) on server (not io.to)
+  - Avoids sending cursor_moved back to the moving client; reduces redundant work.
+
+Interpolation (lerp 0.2) + rAF
+  - Raw network updates can be bursty; easing makes motion readable.
+  - Local sender does not render from server events (filters own userId).
+
+No Redis cursor persistence (MVP)
+  - Ephemeral relay only; late joiners do not see last position until next move.
+  - Presence still uses Redis hashes (separate concern).
+
+Files
+-----
+packages/contracts/socket/schema.ts     — normalizedCursorCoordSchema, cursor payloads
+apps/api/src/modules/realtime/services/cursor.service.ts — relay via socket.to
+apps/frontend/src/lib/cursor.ts         — normalize, throttle, distance, colors
+apps/frontend/src/components/lesson-canvas.tsx — canvas, emit, receive, animate
+apps/frontend/src/app/call/[roomId]/page.tsx     — mounts LessonCanvas in left section
+
+Local test
+----------
+1. Teacher starts class; teacher and student open same /call/{roomId}.
+2. Move mouse on gray canvas area — peer sees colored pointer + email label.
+3. Toggle video sidebar — cursors stay aligned on canvas.
+4. DevTools: move_cursor emits at most ~20/s; tiny movements do not emit.
