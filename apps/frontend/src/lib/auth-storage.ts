@@ -1,4 +1,5 @@
-import { authUserSchema, type SessionUser } from "@/lib/auth";
+import { authUserSchema } from "@english-learning/contracts";
+import type { SessionUser } from "@/lib/auth";
 
 const STORAGE_KEY = "english-learning.auth.user";
 
