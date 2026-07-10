@@ -1,4 +1,7 @@
 import type { Server } from "socket.io";
+import type { Socket } from "socket.io";
+import { serverEvents } from "@english-learning/contracts/socket/events";
+import type { SocketErrorPayload } from "@english-learning/contracts/socket/schema";
 
 let io: Server | null = null;
 
@@ -24,4 +27,8 @@ export function emitToRoom(
 
 export function disconnectRoom(roomId: string, close = true) {
   getRealtimeServer().in(roomId).disconnectSockets(close);
+}
+
+export function emitSocketError(socket: Socket, payload: SocketErrorPayload) {
+  socket.emit(serverEvents.socketError, payload);
 }

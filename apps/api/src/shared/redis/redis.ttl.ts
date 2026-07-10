@@ -1,0 +1,2 @@
+export const REDIS_REALTIME_TTL_SECONDS =
+  Number(process.env.REDIS_REALTIME_TTL_SECONDS) || 7200;

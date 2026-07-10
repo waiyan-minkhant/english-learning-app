@@ -3,6 +3,8 @@ import { authUserSchema } from "@english-learning/contracts";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../../lib/prisma.js";
+import { UnauthorizedError } from "../../../shared/errors/auth-error.js";
+import { ConflictError } from "../../../shared/errors/conflict-error.js";
 
 const JWT_EXPIRES_IN = "7d";
 export const AUTH_COOKIE_NAME = "accessToken";
@@ -26,7 +28,7 @@ function signToken(user: AuthUser) {
 export async function register(email: string, password: string) {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw new Error("Email already in use");
+    throw new ConflictError("Email already in use");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -47,12 +49,12 @@ export async function register(email: string, password: string) {
 export async function login(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
   if (!isPasswordValid) {
-    throw new Error("Invalid credentials");
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   const safeUser: AuthUser = {

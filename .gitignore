@@ -9,3 +9,6 @@ build
 *.log
 coverage
 apps/api/prisma/dev.db
+
+# Frontend design mockups (reference only)
+apps/frontend/src/*.png

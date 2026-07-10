@@ -1,12 +1,8 @@
-import type {
-  PresenceEntryRecord,
-  SocketContextRecord
-} from "../state/presence.state.js";
+import type { PresenceEntryRecord } from "../state/presence.state.js";
 
 export class InMemoryPresenceStore {
   private roomMarkers = new Set<string>();
   private sessions = new Map<string, Map<string, PresenceEntryRecord>>();
-  private sockets = new Map<string, SocketContextRecord>();
 
   async markSessionRoom(sessionId: string) {
     this.roomMarkers.add(sessionId);
@@ -62,28 +58,7 @@ export class InMemoryPresenceStore {
     this.sessions.delete(sessionId);
   }
 
-  async setSocketContext(socketId: string, context: SocketContextRecord) {
-    this.sockets.set(socketId, { ...context });
-  }
-
-  async getSocketContext(
-    socketId: string
-  ): Promise<SocketContextRecord | null> {
-    const context = this.sockets.get(socketId);
-    return context ? { ...context } : null;
-  }
-
-  async deleteSocketContext(socketId: string) {
-    this.sockets.delete(socketId);
-  }
-
   async clearSessionPresenceState(sessionId: string) {
-    const entries = await this.getAllPresenceEntries(sessionId);
-    for (const entry of entries.values()) {
-      for (const socketId of entry.socketIds) {
-        this.sockets.delete(socketId);
-      }
-    }
     this.sessions.delete(sessionId);
     this.roomMarkers.delete(sessionId);
   }
@@ -91,6 +66,5 @@ export class InMemoryPresenceStore {
   reset() {
     this.roomMarkers.clear();
     this.sessions.clear();
-    this.sockets.clear();
   }
 }

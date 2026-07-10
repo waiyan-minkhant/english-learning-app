@@ -35,14 +35,15 @@ const stackSections = [
   },
   {
     title: "Frontend (apps/frontend)",
-    description: "Next.js client app — functional but still evolving visually.",
+    description: "Next.js client — feature-first modules, TanStack Query, Zustand, semantic design tokens, and LiveKit/Socket.IO integration.",
     items: [
       { name: "Next.js 15", role: "App Router, SSR/CSR pages" },
       { name: "React 19", role: "UI components & hooks" },
-      { name: "Tailwind CSS 3", role: "Utility-first styling" },
+      { name: "TanStack Query", role: "Server/async data (auth, session, video, lesson)" },
+      { name: "Zustand", role: "Client & realtime UI state (feature stores)" },
+      { name: "Tailwind CSS 3", role: "Semantic tokens via design/themes" },
       { name: "socket.io-client", role: "Realtime connection to API" },
       { name: "livekit-client", role: "WebRTC room connection" },
-      { name: "Zustand", role: "Client state (where used)" },
       { name: "Zod", role: "Parse API/socket responses" }
     ]
   },

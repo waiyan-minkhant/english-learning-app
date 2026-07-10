@@ -14,8 +14,10 @@ import {
   TEST_ROOM_ID
 } from "../../../test/helpers.js";
 import { InMemoryPresenceStore } from "./presence.in-memory-store.js";
+import { InMemoryConnectionStore } from "./connection.in-memory-store.js";
 
 const presenceTestStore = new InMemoryPresenceStore();
+const connectionTestStore = new InMemoryConnectionStore();
 
 const autoEndSession = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
@@ -51,16 +53,21 @@ vi.mock("../state/presence.state.js", () => ({
     presenceTestStore.deletePresenceEntry(sessionId, userId),
   deleteSessionPresenceHash: (sessionId: string) =>
     presenceTestStore.deleteSessionPresenceHash(sessionId),
-  setSocketContext: (
-    socketId: string,
-    context: Parameters<InMemoryPresenceStore["setSocketContext"]>[1]
-  ) => presenceTestStore.setSocketContext(socketId, context),
-  getSocketContext: (socketId: string) =>
-    presenceTestStore.getSocketContext(socketId),
-  deleteSocketContext: (socketId: string) =>
-    presenceTestStore.deleteSocketContext(socketId),
   clearSessionPresenceState: (sessionId: string) =>
     presenceTestStore.clearSessionPresenceState(sessionId)
+}));
+
+vi.mock("../state/connection.state.js", () => ({
+  bindConnection: (
+    socketId: string,
+    record: Parameters<InMemoryConnectionStore["bindConnection"]>[1]
+  ) => connectionTestStore.bindConnection(socketId, record),
+  getConnection: (socketId: string) =>
+    connectionTestStore.getConnection(socketId),
+  unbindConnection: (socketId: string) =>
+    connectionTestStore.unbindConnection(socketId),
+  clearConnectionsForRoom: (roomId: string) =>
+    connectionTestStore.clearConnectionsForRoom(roomId)
 }));
 
 import {
@@ -87,6 +94,7 @@ describe("presence.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     presenceTestStore.reset();
+    connectionTestStore.reset();
   });
 
   describe("room lifecycle", () => {

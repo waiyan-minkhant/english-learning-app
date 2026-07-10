@@ -8,6 +8,7 @@ import { authRouter } from "./modules/auth/routes/auth.routes.js";
 import { attachRealtimeServer } from "./modules/realtime/socket/realtime.socket.js";
 import { sessionRouter } from "./modules/session/routes/session.routes.js";
 import { videoRouter } from "./modules/video/routes/video.routes.js";
+import { errorHandler } from "./shared/errors/error-handler.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
@@ -29,6 +30,8 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRouter);
 app.use("/sessions", sessionRouter);
 app.use("/video", videoRouter);
+
+app.use(errorHandler);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {

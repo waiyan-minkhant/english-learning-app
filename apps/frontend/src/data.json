@@ -1,0 +1,333 @@
+{
+  "courseId": "elementary-english",
+  "title": "Elementary English",
+  "level": "Elementary",
+  "lessons": [
+    {
+      "id": "lesson-1",
+      "title": "Introduce Yourself",
+      "description": "Learn about introducing yourself when meeting a stranger.",
+      "estimatedMinutes": 20,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 1"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank",
+          "title": "Exercise 1"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching",
+          "title": "Exercise 2"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 2"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Exercise 3"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak",
+          "title": "Exercise 4"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Summary"
+        }
+      ],
+      "number": 1,
+      "listTitle": "Lesson 1 : Introduce Yourself"
+    },
+    {
+      "id": "lesson-2",
+      "title": "Daily Life",
+      "description": "Routines, habits, and telling time in simple English sentences.",
+      "estimatedMinutes": 20,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 1"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank",
+          "title": "Exercise 1"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching",
+          "title": "Exercise 2"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 2"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Exercise 3"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak",
+          "title": "Exercise 4"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Summary"
+        }
+      ],
+      "number": 2,
+      "listTitle": "Lesson 2 : Daily Life"
+    },
+    {
+      "id": "lesson-3",
+      "title": "Food & Shopping",
+      "description": "Identifying fruits, vegetables, and basic market interactions.",
+      "estimatedMinutes": 20,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 1"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank",
+          "title": "Exercise 1"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching",
+          "title": "Exercise 2"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Content 2"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Exercise 3"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak",
+          "title": "Exercise 4"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge",
+          "title": "Lesson Summary"
+        }
+      ],
+      "number": 3,
+      "listTitle": "Lesson 3 : Food & Shopping"
+    },
+    {
+      "id": "lesson-4",
+      "title": "Travel",
+      "description": "Asking for directions and common transportation vocabulary.",
+      "estimatedMinutes": 20,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge"
+        }
+      ],
+      "number": 4,
+      "listTitle": "Lesson 4 : Travel"
+    },
+    {
+      "id": "lesson-5",
+      "title": "School & Work",
+      "description": "Classroom items and describing daily activities at school.",
+      "estimatedMinutes": 20,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge"
+        }
+      ],
+      "number": 5,
+      "listTitle": "Lesson 5 : School & Work"
+    },
+    {
+      "id": "lesson-6",
+      "title": "Social Conversation",
+      "description": "Expressing feelings and having basic chats with friends.",
+      "estimatedMinutes": 25,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "exercise",
+          "exerciseType": "conversation"
+        },
+        {
+          "id": "step-2",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-3",
+          "type": "exercise",
+          "exerciseType": "fill_in_blank"
+        },
+        {
+          "id": "step-4",
+          "type": "exercise",
+          "exerciseType": "matching"
+        },
+        {
+          "id": "step-5",
+          "type": "content",
+          "contentType": "knowledge"
+        },
+        {
+          "id": "step-6",
+          "type": "exercise",
+          "exerciseType": "listen_and_build_sentence"
+        },
+        {
+          "id": "step-7",
+          "type": "exercise",
+          "exerciseType": "listen_and_speak"
+        },
+        {
+          "id": "step-8",
+          "type": "content",
+          "contentType": "knowledge"
+        }
+      ],
+      "number": 6,
+      "listTitle": "Lesson 6 : Social Conversation"
+    }
+  ],
+  "welcomeTitle": "Hello! Welcome to Elementary English Class",
+  "welcomeSubtitle": "Let's continue your journey to becoming an English superstar! Which lesson are we tackling today?"
+}

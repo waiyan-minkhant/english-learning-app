@@ -1,5 +1,8 @@
-import { Router } from "express";
 import { authCredentialsSchema } from "@english-learning/contracts";
+import { Router } from "express";
+import { asyncHandler } from "../../../shared/errors/async-handler.js";
+import { UnauthorizedError } from "../../../shared/errors/auth-error.js";
+import { ValidationError } from "../../../shared/errors/validation-error.js";
 import {
   AUTH_COOKIE_NAME,
   login,
@@ -18,57 +21,54 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000
 };
 
-authRouter.post("/register", async (req, res) => {
-  const parsed = authCredentialsSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ errors: parsed.error.flatten() });
-  }
+authRouter.post(
+  "/register",
+  asyncHandler(async (req, res) => {
+    const parsed = authCredentialsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new ValidationError("Validation failed", parsed.error.flatten());
+    }
 
-  try {
     const result = await register(parsed.data.email, parsed.data.password);
     res.cookie(AUTH_COOKIE_NAME, result.token, cookieOptions);
-    return res.status(201).json({ user: result.user });
-  } catch (error) {
-    return res.status(400).json({
-      message: error instanceof Error ? error.message : "Registration failed"
-    });
-  }
-});
+    res.status(201).json({ user: result.user });
+  })
+);
 
-authRouter.post("/login", async (req, res) => {
-  const parsed = authCredentialsSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ errors: parsed.error.flatten() });
-  }
+authRouter.post(
+  "/login",
+  asyncHandler(async (req, res) => {
+    const parsed = authCredentialsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new ValidationError("Validation failed", parsed.error.flatten());
+    }
 
-  try {
     const result = await login(parsed.data.email, parsed.data.password);
     res.cookie(AUTH_COOKIE_NAME, result.token, cookieOptions);
-    return res.json({ user: result.user });
-  } catch (error) {
-    return res.status(401).json({
-      message: error instanceof Error ? error.message : "Login failed"
-    });
-  }
-});
+    res.json({ user: result.user });
+  })
+);
 
-authRouter.get("/me", (req, res) => {
-  const token = req.cookies?.[AUTH_COOKIE_NAME];
-  if (!token) {
-    return res.status(401).json({ message: "Unauthenticated" });
-  }
+authRouter.get(
+  "/me",
+  asyncHandler(async (req, res) => {
+    const token = req.cookies?.[AUTH_COOKIE_NAME];
+    if (!token) {
+      throw new UnauthorizedError();
+    }
 
-  try {
-    const user = verifyToken(token);
-    return res.json({ user });
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-});
+    try {
+      const user = verifyToken(token);
+      res.json({ user });
+    } catch {
+      throw new UnauthorizedError("Invalid token");
+    }
+  })
+);
 
 authRouter.post("/logout", (_req, res) => {
   res.clearCookie(AUTH_COOKIE_NAME, cookieOptions);
-  return res.status(204).send();
+  res.status(204).send();
 });
 
 export { authRouter };

@@ -11,7 +11,8 @@ export const serverEvents = {
   participantDisconnected: "participant_disconnected",
   teacherOffline: "teacher_offline",
   sessionEnded: "session_ended",
-  cursorMoved: "cursor_moved"
+  cursorMoved: "cursor_moved",
+  socketError: "socket_error"
 } as const;
 
 export type ClientEvent = (typeof clientEvents)[keyof typeof clientEvents];

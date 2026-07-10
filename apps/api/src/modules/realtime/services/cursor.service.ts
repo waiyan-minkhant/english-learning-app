@@ -1,8 +1,10 @@
 import type { AuthUser } from "@english-learning/contracts";
-import { serverEvents } from "@english-learning/contracts/socket/events";
+import { clientEvents, serverEvents } from "@english-learning/contracts/socket/events";
 import { cursorMovePayloadSchema } from "@english-learning/contracts/socket/schema";
 import type { Socket } from "socket.io";
-import { getSocketContext } from "./presence.service.js";
+import { isSessionLive } from "../../session/services/session.service.js";
+import { emitSocketError } from "../realtime.gateway.js";
+import * as connectionService from "./connection.service.js";
 
 function getSocketUser(socket: Socket): AuthUser | null {
   const user = (socket.data as { user?: AuthUser }).user;
@@ -17,8 +19,18 @@ export async function handleMoveCursor(socket: Socket, payload: unknown) {
   if (!parsed.success) return;
 
   const { sessionId, x, y } = parsed.data;
-  const context = await getSocketContext(socket.id);
-  if (!context || context.sessionId !== sessionId) return;
+  const connection = await connectionService.getConnection(socket.id);
+  if (!connection || connection.roomId !== sessionId) return;
+
+  if (!(await isSessionLive(connection.roomId))) {
+    await connectionService.unbindSocket(socket.id);
+    emitSocketError(socket, {
+      request: clientEvents.moveCursor,
+      code: "SESSION_NOT_LIVE",
+      message: "The class has already ended."
+    });
+    return;
+  }
 
   socket.to(sessionId).emit(serverEvents.cursorMoved, {
     sessionId,

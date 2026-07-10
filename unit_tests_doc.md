@@ -8,7 +8,7 @@ This document describes how unit tests are set up in the English Learning App mo
 |------|--------|
 | **Runner** | [Vitest](https://vitest.dev/) v3.x |
 | **Package** | `apps/api` only (backend business logic) |
-| **Test count** | 36 tests across 3 files (as of last run) |
+| **Test count** | 42 tests across 3 files (as of last run) |
 | **Style** | Unit tests colocated next to `*.service.ts` files |
 | **External deps in tests** | None (no Postgres, Redis, or LiveKit required) |
 
@@ -73,6 +73,8 @@ Sets defaults before modules load:
 
 - `JWT_SECRET=test-secret`
 - `REALTIME_DISCONNECT_TIMEOUT_MS=100` (short timeout for reconnect timer tests)
+- `TEACHER_AUTO_END_SESSION_MS=100` (short timeout for teacher auto-end tests)
+- `REDIS_REALTIME_TTL_SECONDS=7200` (matches production default; state layer reads at runtime)
 
 ### `apps/api/tsconfig.json`
 
@@ -110,14 +112,15 @@ Excluded from production `tsc` emit:
 | Path | Tests | Service under test |
 |------|-------|-------------------|
 | `apps/api/src/modules/auth/services/auth.service.test.ts` | 7 | `auth.service.ts` |
-| `apps/api/src/modules/session/services/session.service.test.ts` | 17 | `session.service.ts` |
-| `apps/api/src/modules/realtime/services/presence.service.test.ts` | 12 | `presence.service.ts` |
+| `apps/api/src/modules/session/services/session.service.test.ts` | 21 | `session.service.ts` |
+| `apps/api/src/modules/realtime/services/presence.service.test.ts` | 14 | `presence.service.ts` |
 
 ### Test-only support code
 
 | Path | Purpose |
 |------|---------|
-| `apps/api/src/modules/realtime/services/presence.in-memory-store.ts` | In-memory implementation of Redis presence keys (room marker, session hash, socket index) |
+| `apps/api/src/modules/realtime/services/presence.in-memory-store.ts` | In-memory stand-in for Redis presence keys (`session:{id}`, `session:{id}:presence`) |
+| `apps/api/src/modules/realtime/services/connection.in-memory-store.ts` | In-memory stand-in for `connection:socket:{socketId}` keys |
 
 Convention: **production service tests live in `*.service.test.ts` beside `*.service.ts`**. Shared helpers live under `apps/api/src/test/`.
 
@@ -165,7 +168,7 @@ HTTP-level auth (`getAuthUser`, `requireRole` in `apps/api/src/lib/require-auth.
 | `startSession` | No class → error; ends other `live` sessions; creates `class-{8}` room id; calls `initializePresenceRoom` |
 | `joinSession` | No class / no live session errors; returns normalized session DTO |
 | `endSession` | Wrong or missing session → `"Cannot end this session"`; updates DB to `ended` |
-| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; valid → `joinPresence` |
+| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; Redis room exists but Postgres not live → `clearPresenceRoom` + `emitSocketError` (`SESSION_NOT_LIVE`); valid → `isSessionLive` + `joinPresence` |
 | `handleLeaveSession` | Same guards; valid → `leavePresence` |
 | `handleEndSession` | Students blocked; missing room or failed `endSession` → no terminate; teacher success → DB end + `clearPresenceRoom` + `session_ended` emit + `disconnectRoom` |
 
@@ -184,11 +187,11 @@ Prisma and presence/gateway collaborators are **mocked**; no real database.
 | Rejoin | `joinPresence` before timer fires cancels removal |
 | Guard | Timer does not delete user if sockets were restored before fire |
 
-`presence.state` is replaced by `presence.in-memory-store.ts` in tests. `emitToRoom` is a spy (no real Socket.IO server).
+`presence.state` and `connection.state` are replaced by in-memory stores in presence tests. `emitToRoom` is a spy (no real Socket.IO server).
 
 ### 4. Room membership and disconnect/reconnect
 
-These concerns are split across **session** (join only if presence room exists; leave/end handlers) and **presence** (socket membership, reconnect timer, multi-tab). Together they document the intended realtime room behavior without integration tests.
+These concerns are split across **session** (join only if presence room exists and Postgres session is live; leave/end handlers) and **presence** (socket membership, reconnect timer, multi-tab). Together they document the intended realtime room behavior without integration tests.
 
 ---
 
@@ -205,11 +208,11 @@ Use `vi.hoisted()` for mock function references so Vitest’s hoisted `vi.mock` 
 ### Session → presence + gateway
 
 - `presence.service` exports: `initializePresenceRoom`, `hasPresenceRoom`, `joinPresence`, `leavePresence`, `clearPresenceRoom`
-- `realtime.gateway` exports: `emitToRoom`, `disconnectRoom`
+- `realtime.gateway` exports: `emitToRoom`, `disconnectRoom`, `emitSocketError`
 
 ### Presence → state + gateway
 
-- Full `presence.state` API delegated to `InMemoryPresenceStore`
+- `presence.state` and `connection.state` delegated to in-memory stores
 - `emitToRoom` spied to assert `serverEvents` from `@english-learning/contracts/socket/events`
 
 ### Fake timers
@@ -222,9 +225,9 @@ Presence reconnect tests use `vi.useFakeTimers()` and `vi.advanceTimersByTimeAsy
 
 | Module / layer | Reason |
 |----------------|--------|
-| `cursor.service.ts` | Deferred; collaborative cursor is relay-only for now |
+| `cursor.service.ts` | Relay + `isSessionLive` guard implemented; unit tests not added yet |
 | `video.service.ts` | LiveKit JWT helper; thin wrapper around SDK |
-| `presence.state.ts` | Persistence layer; covered indirectly via in-memory stand-in |
+| `presence.state.ts` / `connection.state.ts` | Persistence layers; covered indirectly via in-memory stand-ins |
 | Socket handlers (`*.socket.ts`), `realtime.gateway` init | Wiring; would be integration tests |
 | `auth-socket.middleware.ts`, `require-auth.ts`, route handlers | HTTP/socket plumbing outside `.service.ts` scope |
 | `apps/frontend` | No Vitest project yet (`call-room`, `lesson-canvas`, `cursor.ts`, etc.) |
@@ -238,7 +241,7 @@ Presence reconnect tests use `vi.useFakeTimers()` and `vi.advanceTimersByTimeAsy
 ### API — same service-layer style
 
 - **`video.service`:** missing env vars, grant payload, JWT shape (mock `livekit-server-sdk` if needed).
-- **`cursor.service`:** relay rules, `socket.to(sessionId)` exclusion of sender (when you want coverage).
+- **`cursor.service`:** `isSessionLive` rejection, `unbindSocket`, `emitSocketError` on stale session; relay rules.
 - **`presence.state`:** optional focused tests with Redis mock or `ioredis-mock` if Redis logic grows.
 - **Session edge cases:** e.g. `handleEndSession` with invalid payload string; concurrent `startSession` (if you add locking).
 

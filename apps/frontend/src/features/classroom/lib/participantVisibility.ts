@@ -1,0 +1,20 @@
+import type { Presence } from "@/lib/socket/listeners";
+
+export function isParticipantOnlineForCursor(status: Presence["status"]) {
+  return status === "online";
+}
+
+export function isActiveParticipantStatus(status: Presence["status"]) {
+  return status === "online" || status === "reconnecting";
+}
+
+export function countActiveParticipants(participants: Presence[]) {
+  return participants.filter((participant) =>
+    isActiveParticipantStatus(participant.status)
+  ).length;
+}
+
+export function isRemoteVideoTileVisible(participant: Presence | undefined) {
+  if (!participant) return false;
+  return participant.status === "online";
+}

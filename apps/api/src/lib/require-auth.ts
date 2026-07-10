@@ -4,6 +4,8 @@ import {
   AUTH_COOKIE_NAME,
   verifyToken
 } from "../modules/auth/services/auth.service.js";
+import { UnauthorizedError } from "../shared/errors/auth-error.js";
+import { ForbiddenError } from "../shared/errors/forbidden-error.js";
 
 export function getAuthUser(req: Request): AuthUser | null {
   const token = req.cookies?.[AUTH_COOKIE_NAME];
@@ -16,8 +18,21 @@ export function getAuthUser(req: Request): AuthUser | null {
   }
 }
 
+export function requireAuth(req: Request): AuthUser {
+  const token = req.cookies?.[AUTH_COOKIE_NAME];
+  if (!token) {
+    throw new UnauthorizedError();
+  }
+
+  try {
+    return verifyToken(token);
+  } catch {
+    throw new UnauthorizedError("Invalid token");
+  }
+}
+
 export function requireRole(user: AuthUser, role: AuthUser["role"]) {
   if (user.role !== role) {
-    throw new Error(`Only ${role}s can perform this action`);
+    throw new ForbiddenError(`Only ${role}s can perform this action`);
   }
 }

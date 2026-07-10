@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { AuthUser } from "@english-learning/contracts";
-import { serverEvents } from "@english-learning/contracts/socket/events";
+import { clientEvents, serverEvents } from "@english-learning/contracts/socket/events";
 import {
   endSessionPayloadSchema,
   joinSessionPayloadSchema
 } from "@english-learning/contracts/socket/schema";
 import type { Socket } from "socket.io";
 import { prisma } from "../../../lib/prisma.js";
+import { ForbiddenError } from "../../../shared/errors/forbidden-error.js";
+import { NotFoundError } from "../../../shared/errors/not-found-error.js";
 import {
   clearPresenceRoom,
   hasPresenceRoom,
@@ -16,6 +18,7 @@ import {
 } from "../../realtime/services/presence.service.js";
 import {
   disconnectRoom,
+  emitSocketError,
   emitToRoom
 } from "../../realtime/realtime.gateway.js";
 
@@ -58,7 +61,7 @@ export async function startSession(teacherId: string) {
   });
 
   if (!classRecord) {
-    throw new Error("No class assigned to this teacher");
+    throw new NotFoundError("No class assigned to this teacher");
   }
 
   await prisma.liveSession.updateMany({
@@ -86,7 +89,7 @@ export async function joinSession(studentId: string) {
   });
 
   if (!classRecord) {
-    throw new Error("No class assigned to this student");
+    throw new NotFoundError("No class assigned to this student");
   }
 
   const session = await prisma.liveSession.findFirst({
@@ -95,7 +98,7 @@ export async function joinSession(studentId: string) {
   });
 
   if (!session) {
-    throw new Error("No live session is available to join");
+    throw new NotFoundError("No live session is available to join");
   }
 
   return toLiveSessionResponse(session);
@@ -108,7 +111,7 @@ export async function endSession(teacherId: string, roomId: string) {
   });
 
   if (!session || session.class.teacherId !== teacherId) {
-    throw new Error("Cannot end this session");
+    throw new ForbiddenError("Cannot end this session");
   }
 
   await prisma.liveSession.update({
@@ -130,6 +133,14 @@ export async function autoEndSession(roomId: string, teacherId: string) {
   await terminateSession(roomId);
 }
 
+export async function isSessionLive(roomId: string): Promise<boolean> {
+  const session = await prisma.liveSession.findFirst({
+    where: { roomId, status: "live" },
+    select: { id: true }
+  });
+  return session !== null;
+}
+
 export async function handleJoinSession(socket: Socket, payload: unknown) {
   const user = getSocketUser(socket);
   if (!user) return;
@@ -141,6 +152,16 @@ export async function handleJoinSession(socket: Socket, payload: unknown) {
 
   const sessionId = parsed.data;
   if (!(await hasPresenceRoom(sessionId))) return;
+
+  if (!(await isSessionLive(sessionId))) {
+    await clearPresenceRoom(sessionId);
+    emitSocketError(socket, {
+      request: clientEvents.joinSession,
+      code: "SESSION_NOT_LIVE",
+      message: "The class has already ended."
+    });
+    return;
+  }
 
   await joinPresence(socket, user, sessionId);
 }

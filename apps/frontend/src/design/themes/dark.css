@@ -1,0 +1,11 @@
+[data-theme="dark"] {
+  --color-background: #1A1B1B;
+  --color-surface: #282A2A;
+  --color-surface-secondary: #323434;
+  --color-muted: #3A3C3C;
+  --color-foreground: #FCFDFD;
+  --color-muted-foreground: #A0A4A4;
+  --color-border: #3A3C3C;
+  --color-border-strong: #646868;
+  --color-brand-background: #3A2A22;
+}

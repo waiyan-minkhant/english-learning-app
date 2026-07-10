@@ -2,6 +2,7 @@ import type { AuthUser } from "@english-learning/contracts";
 import { serverEvents } from "@english-learning/contracts/socket/events";
 import type { Presence } from "@english-learning/contracts/socket/schema";
 import type { Socket } from "socket.io";
+import * as connectionService from "./connection.service.js";
 import { emitToRoom } from "../realtime.gateway.js";
 import * as presenceState from "../state/presence.state.js";
 
@@ -131,10 +132,6 @@ export async function hasPresenceRoom(sessionId: string) {
   return presenceState.sessionRoomExists(sessionId);
 }
 
-export async function getSocketContext(socketId: string) {
-  return presenceState.getSocketContext(socketId);
-}
-
 export async function registerParticipants(
   sessionId: string,
   users: Pick<AuthUser, "id" | "email" | "role">[]
@@ -163,6 +160,7 @@ export async function clearPresenceRoom(sessionId: string) {
 
   clearAutoEndTimer(sessionId);
 
+  await connectionService.clearConnectionsForRoom(sessionId);
   await presenceState.clearSessionPresenceState(sessionId);
 }
 
@@ -196,10 +194,7 @@ export async function joinPresence(
   }
 
   await presenceState.setPresenceEntry(sessionId, user.id, entry);
-  await presenceState.setSocketContext(socket.id, {
-    sessionId,
-    userId: user.id
-  });
+  await connectionService.bindSocket(socket.id, sessionId, user.id);
   socket.join(sessionId);
 
   await emitPresenceUpdated(sessionId);
@@ -216,10 +211,10 @@ export async function leavePresence(
   clearDisconnectTimer(sessionId, user.id);
 
   for (const socketId of entry.socketIds) {
-    await presenceState.deleteSocketContext(socketId);
+    await connectionService.unbindSocket(socketId);
   }
   await presenceState.deletePresenceEntry(sessionId, user.id);
-  await presenceState.deleteSocketContext(socket.id);
+  await connectionService.unbindSocket(socket.id);
   socket.leave(sessionId);
 
   const remaining = await presenceState.getAllPresenceEntries(sessionId);
@@ -233,11 +228,11 @@ export async function leavePresence(
 }
 
 export async function handleSocketDisconnect(socket: Socket) {
-  const context = await presenceState.getSocketContext(socket.id);
-  if (!context) return;
+  const connection = await connectionService.getConnection(socket.id);
+  if (!connection) return;
 
-  const { sessionId, userId } = context;
-  await presenceState.deleteSocketContext(socket.id);
+  const { roomId: sessionId, userId } = connection;
+  await connectionService.unbindSocket(socket.id);
 
   const entry = await presenceState.getPresenceEntry(sessionId, userId);
   if (!entry) return;

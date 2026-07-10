@@ -1,0 +1,13 @@
+@import "./themes/light.css";
+@import "./themes/dark.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+  }
+}

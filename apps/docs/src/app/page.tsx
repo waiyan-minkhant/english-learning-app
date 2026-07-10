@@ -103,8 +103,9 @@ export default function OverviewPage() {
       <section className="mt-12 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-8 text-white shadow-elevated">
         <h2 className="text-xl font-semibold">Explore the docs</h2>
         <p className="mt-2 max-w-xl text-brand-100">
-          Dive into shipped features, the full tech stack, and backend
-          architecture — designed for interview walkthroughs and onboarding.
+          Dive into shipped features, the full tech stack, and platform
+          architecture (frontend overview + detailed backend design) — designed
+          for interview walkthroughs and onboarding.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <DocLink href="/features">Features</DocLink>

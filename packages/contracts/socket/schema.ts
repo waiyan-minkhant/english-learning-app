@@ -51,6 +51,12 @@ export const cursorMovedPayloadSchema = z.object({
   y: normalizedCursorCoordSchema
 });
 
+export const socketErrorPayloadSchema = z.object({
+  request: z.string(),
+  code: z.string(),
+  message: z.string()
+});
+
 export type JoinSessionPayload = z.infer<typeof joinSessionPayloadSchema>;
 export type EndSessionPayload = z.infer<typeof endSessionPayloadSchema>;
 export type SessionEndedPayload = z.infer<typeof sessionEndedPayloadSchema>;
@@ -61,3 +67,4 @@ export type ParticipantEventPayload = z.infer<typeof participantEventPayloadSche
 export type TeacherOfflinePayload = z.infer<typeof teacherOfflinePayloadSchema>;
 export type CursorMovePayload = z.infer<typeof cursorMovePayloadSchema>;
 export type CursorMovedPayload = z.infer<typeof cursorMovedPayloadSchema>;
+export type SocketErrorPayload = z.infer<typeof socketErrorPayloadSchema>;

@@ -1,4 +1,4 @@
-import { serverEvents } from "@english-learning/contracts/socket/events";
+import { clientEvents, serverEvents } from "@english-learning/contracts/socket/events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   mockSocket,
@@ -19,7 +19,8 @@ const {
   leavePresence,
   clearPresenceRoom,
   emitToRoom,
-  disconnectRoom
+  disconnectRoom,
+  emitSocketError
 } = vi.hoisted(() => ({
   classFindFirst: vi.fn(),
   liveSessionUpdateMany: vi.fn(),
@@ -32,7 +33,8 @@ const {
   leavePresence: vi.fn(),
   clearPresenceRoom: vi.fn(),
   emitToRoom: vi.fn(),
-  disconnectRoom: vi.fn()
+  disconnectRoom: vi.fn(),
+  emitSocketError: vi.fn()
 }));
 
 vi.mock("../../../lib/prisma.js", () => ({
@@ -57,7 +59,8 @@ vi.mock("../../realtime/services/presence.service.js", () => ({
 
 vi.mock("../../realtime/realtime.gateway.js", () => ({
   emitToRoom,
-  disconnectRoom
+  disconnectRoom,
+  emitSocketError
 }));
 
 import {
@@ -83,6 +86,7 @@ describe("session.service", () => {
     clearPresenceRoom.mockResolvedValue(undefined);
     liveSessionUpdateMany.mockResolvedValue({ count: 0 });
     liveSessionUpdate.mockResolvedValue({});
+    liveSessionFindFirst.mockResolvedValue({ id: sessionId });
   });
 
   describe("startSession", () => {
@@ -256,6 +260,22 @@ describe("session.service", () => {
 
       await handleJoinSession(mockSocket(teacherUser()), TEST_ROOM_ID);
 
+      expect(liveSessionFindFirst).not.toHaveBeenCalled();
+      expect(joinPresence).not.toHaveBeenCalled();
+    });
+
+    it("self-heals and emits socket_error when session is not live in Postgres", async () => {
+      liveSessionFindFirst.mockResolvedValue(null);
+      const socket = mockSocket(teacherUser());
+
+      await handleJoinSession(socket, TEST_ROOM_ID);
+
+      expect(clearPresenceRoom).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(emitSocketError).toHaveBeenCalledWith(socket, {
+        request: clientEvents.joinSession,
+        code: "SESSION_NOT_LIVE",
+        message: "The class has already ended."
+      });
       expect(joinPresence).not.toHaveBeenCalled();
     });
 
@@ -265,6 +285,10 @@ describe("session.service", () => {
 
       await handleJoinSession(socket, TEST_ROOM_ID);
 
+      expect(liveSessionFindFirst).toHaveBeenCalledWith({
+        where: { roomId: TEST_ROOM_ID, status: "live" },
+        select: { id: true }
+      });
       expect(joinPresence).toHaveBeenCalledWith(socket, user, TEST_ROOM_ID);
     });
   });
