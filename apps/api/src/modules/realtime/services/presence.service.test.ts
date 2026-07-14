@@ -122,7 +122,11 @@ describe("presence.service", () => {
 
       const payload = lastPresencePayload();
       expect(payload.participants).toEqual([
-        expect.objectContaining({ userId: user.id, status: "online" })
+        expect.objectContaining({
+          userId: user.id,
+          name: user.name,
+          status: "online"
+        })
       ]);
     });
 
@@ -195,6 +199,7 @@ describe("presence.service", () => {
         studentUser().id
       );
       expect(entry?.status).toBe("offline");
+      expect(entry?.name).toBe(studentUser().name);
       expect(entry?.socketIds).toEqual([]);
     });
   });

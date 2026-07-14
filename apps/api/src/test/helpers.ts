@@ -11,6 +11,7 @@ export function teacherUser(overrides: Partial<AuthUser> = {}): AuthUser {
   return {
     id: TEACHER_ID,
     email: "teacher@example.com",
+    name: "Clair",
     role: "teacher",
     ...overrides
   };
@@ -20,6 +21,7 @@ export function studentUser(overrides: Partial<AuthUser> = {}): AuthUser {
   return {
     id: STUDENT_ID,
     email: "student@example.com",
+    name: "Aung Aung",
     role: "student",
     ...overrides
   };

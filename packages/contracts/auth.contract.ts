@@ -14,6 +14,7 @@ export const loginRequestSchema = authCredentialsSchema;
 export const authUserSchema = z.object({
   id: z.string().uuid(),
   email: z.email(),
+  name: z.string().min(1),
   role: userRoleSchema
 });
 

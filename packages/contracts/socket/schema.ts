@@ -19,6 +19,7 @@ export const presenceStatusSchema = z.enum([
 export const presenceSchema = z.object({
   userId: z.uuid(),
   email: z.email(),
+  name: z.string().min(1),
   role: userRoleSchema,
   status: presenceStatusSchema
 });
@@ -57,6 +58,52 @@ export const socketErrorPayloadSchema = z.object({
   message: z.string()
 });
 
+export const participantControlsSchema = z.object({
+  microphoneEnabled: z.boolean(),
+  cursorEnabled: z.boolean()
+});
+
+export const participantControlsMapSchema = z.record(
+  z.uuid(),
+  participantControlsSchema
+);
+
+export const updateParticipantControlsPayloadSchema = z
+  .object({
+    sessionId: roomIdSchema,
+    userId: z.uuid(),
+    microphoneEnabled: z.boolean().optional(),
+    cursorEnabled: z.boolean().optional()
+  })
+  .refine(
+    (value) =>
+      value.microphoneEnabled !== undefined || value.cursorEnabled !== undefined,
+    { message: "At least one control field is required" }
+  );
+
+export const updateBulkParticipantControlsPayloadSchema = z
+  .object({
+    sessionId: roomIdSchema,
+    target: z.literal("all_students"),
+    microphoneEnabled: z.boolean().optional(),
+    cursorEnabled: z.boolean().optional()
+  })
+  .refine(
+    (value) =>
+      value.microphoneEnabled !== undefined || value.cursorEnabled !== undefined,
+    { message: "At least one control field is required" }
+  );
+
+export const participantControlsUpdatedPayloadSchema = z.object({
+  sessionId: roomIdSchema,
+  participantControls: participantControlsMapSchema
+});
+
+export const joinSessionSuccessPayloadSchema = z.object({
+  roomId: roomIdSchema,
+  participantControls: participantControlsMapSchema
+});
+
 export type JoinSessionPayload = z.infer<typeof joinSessionPayloadSchema>;
 export type EndSessionPayload = z.infer<typeof endSessionPayloadSchema>;
 export type SessionEndedPayload = z.infer<typeof sessionEndedPayloadSchema>;
@@ -68,3 +115,19 @@ export type TeacherOfflinePayload = z.infer<typeof teacherOfflinePayloadSchema>;
 export type CursorMovePayload = z.infer<typeof cursorMovePayloadSchema>;
 export type CursorMovedPayload = z.infer<typeof cursorMovedPayloadSchema>;
 export type SocketErrorPayload = z.infer<typeof socketErrorPayloadSchema>;
+export type ParticipantControls = z.infer<typeof participantControlsSchema>;
+export type ParticipantControlsMap = z.infer<
+  typeof participantControlsMapSchema
+>;
+export type UpdateParticipantControlsPayload = z.infer<
+  typeof updateParticipantControlsPayloadSchema
+>;
+export type UpdateBulkParticipantControlsPayload = z.infer<
+  typeof updateBulkParticipantControlsPayloadSchema
+>;
+export type ParticipantControlsUpdatedPayload = z.infer<
+  typeof participantControlsUpdatedPayloadSchema
+>;
+export type JoinSessionSuccessPayload = z.infer<
+  typeof joinSessionSuccessPayloadSchema
+>;

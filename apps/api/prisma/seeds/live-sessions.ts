@@ -23,12 +23,12 @@ export async function seedLiveSessions(prisma: PrismaClient) {
   await prisma.liveSession.upsert({
     where: { roomId: DEMO_ROOM_IDS.session2 },
     update: {
-      classId: DEMO_CLASS_IDS.class2,
+      classId: DEMO_CLASS_IDS.class1,
       status: "scheduled"
     },
     create: {
       roomId: DEMO_ROOM_IDS.session2,
-      classId: DEMO_CLASS_IDS.class2,
+      classId: DEMO_CLASS_IDS.class1,
       status: "scheduled"
     }
   });

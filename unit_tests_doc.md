@@ -8,7 +8,7 @@ This document describes how unit tests are set up in the English Learning App mo
 |------|--------|
 | **Runner** | [Vitest](https://vitest.dev/) v3.x |
 | **Package** | `apps/api` only (backend business logic) |
-| **Test count** | 42 tests across 3 files (as of last run) |
+| **Test count** | 50 tests across 5 files (as of last run) |
 | **Style** | Unit tests colocated next to `*.service.ts` files |
 | **External deps in tests** | None (no Postgres, Redis, or LiveKit required) |
 
@@ -113,7 +113,9 @@ Excluded from production `tsc` emit:
 |------|-------|-------------------|
 | `apps/api/src/modules/auth/services/auth.service.test.ts` | 7 | `auth.service.ts` |
 | `apps/api/src/modules/session/services/session.service.test.ts` | 21 | `session.service.ts` |
+| `apps/api/src/modules/session/services/participant-controls.service.test.ts` | 6 | `participant-controls.service.ts` |
 | `apps/api/src/modules/realtime/services/presence.service.test.ts` | 14 | `presence.service.ts` |
+| `apps/api/src/modules/realtime/services/cursor.service.test.ts` | 2 | `cursor.service.ts` |
 
 ### Test-only support code
 
@@ -121,6 +123,7 @@ Excluded from production `tsc` emit:
 |------|---------|
 | `apps/api/src/modules/realtime/services/presence.in-memory-store.ts` | In-memory stand-in for Redis presence keys (`session:{id}`, `session:{id}:presence`) |
 | `apps/api/src/modules/realtime/services/connection.in-memory-store.ts` | In-memory stand-in for `connection:socket:{socketId}` keys |
+| `apps/api/src/modules/session/state/participant-controls.in-memory-store.ts` | In-memory stand-in for `participant:controls:{sessionId}` hashes |
 
 Convention: **production service tests live in `*.service.test.ts` beside `*.service.ts`**. Shared helpers live under `apps/api/src/test/`.
 
@@ -135,20 +138,27 @@ flowchart TB
   subgraph tested [Covered by unit tests]
     AuthSvc[auth.service]
     SessionSvc[session.service]
+    ControlsSvc[participant-controls.service]
     PresenceSvc[presence.service]
+    CursorSvc[cursor.service]
   end
   subgraph mocked [Mocked in tests]
     Prisma[prisma]
     PresenceState[presence.state / in-memory store]
+    ControlsState[participant-controls.state / in-memory store]
     Gateway[realtime.gateway]
     PresencePeer[presence.service - session tests only]
   end
   AuthSvc --> Prisma
   SessionSvc --> Prisma
   SessionSvc --> PresencePeer
+  SessionSvc --> ControlsSvc
   SessionSvc --> Gateway
+  ControlsSvc --> ControlsState
+  ControlsSvc --> Gateway
   PresenceSvc --> PresenceState
   PresenceSvc --> Gateway
+  CursorSvc --> Gateway
 ```
 
 ### 1. Authorization (`auth.service`)
@@ -165,21 +175,31 @@ HTTP-level auth (`getAuthUser`, `requireRole` in `apps/api/src/lib/require-auth.
 
 | Area | Behavior verified |
 |------|-------------------|
-| `startSession` | No class → error; ends other `live` sessions; creates `class-{8}` room id; calls `initializePresenceRoom` |
+| `startSession` | No class → error; ends other `live` sessions; creates `class-{8}` room id; calls `initializePresenceRoom` + `initializeSessionParticipantControls` |
 | `joinSession` | No class / no live session errors; returns normalized session DTO |
 | `endSession` | Wrong or missing session → `"Cannot end this session"`; updates DB to `ended` |
-| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; Redis room exists but Postgres not live → `clearPresenceRoom` + `emitSocketError` (`SESSION_NOT_LIVE`); valid → `isSessionLive` + `joinPresence` |
+| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; Redis room exists but Postgres not live → `clearPresenceRoom` + `emitSocketError` (`SESSION_NOT_LIVE`); valid → `isSessionLive` + `joinPresence` + controls snapshot ack |
 | `handleLeaveSession` | Same guards; valid → `leavePresence` |
-| `handleEndSession` | Students blocked; missing room or failed `endSession` → no terminate; teacher success → DB end + `clearPresenceRoom` + `session_ended` emit + `disconnectRoom` |
+| `handleEndSession` | Students blocked; missing room or failed `endSession` → no terminate; teacher success → DB end + clear presence/controls + `session_ended` emit + `disconnectRoom` |
 
 Prisma and presence/gateway collaborators are **mocked**; no real database.
 
-### 3. Presence lifecycle (`presence.service`)
+### 3. Participant controls (`participant-controls.service`)
+
+| Area | Behavior verified |
+|------|-------------------|
+| Init defaults | Teacher mic+cursor on; students mic on, cursor off |
+| Bulk update | `all_students` mute leaves teacher unmuted |
+| Single update | Teacher can patch one student's mic/cursor flags |
+| Broadcast | Successful update emits `participant_controls_updated` |
+| `canUseCursor` | Teachers always allowed; students read stored `cursorEnabled` |
+
+### 4. Presence lifecycle (`presence.service`)
 
 | Area | Behavior verified |
 |------|-------------------|
 | Room | `initializePresenceRoom` / `hasPresenceRoom` |
-| Join / leave | Socket room join, online status, `presence_updated` (online/reconnecting only, not offline seeds) |
+| Join / leave | Socket room join, online status, `presence_updated` (online/reconnecting only, not offline seeds); entries include `name` |
 | `registerParticipants` | Offline seed when room exists; no-op when room missing |
 | `clearPresenceRoom` | Clears state; cancels pending disconnect timer |
 | Multi-tab | Disconnect one socket while another remains → stays `online` |
@@ -189,9 +209,16 @@ Prisma and presence/gateway collaborators are **mocked**; no real database.
 
 `presence.state` and `connection.state` are replaced by in-memory stores in presence tests. `emitToRoom` is a spy (no real Socket.IO server).
 
-### 4. Room membership and disconnect/reconnect
+### 5. Cursor gating (`cursor.service`)
 
-These concerns are split across **session** (join only if presence room exists and Postgres session is live; leave/end handlers) and **presence** (socket membership, reconnect timer, multi-tab). Together they document the intended realtime room behavior without integration tests.
+| Area | Behavior verified |
+|------|-------------------|
+| Live session + cursor allowed | Relays `cursor_moved` to peers when session is live and `canUseCursor` is true |
+| Disabled cursor | Student with `cursorEnabled: false` does not relay |
+
+### 6. Room membership and disconnect/reconnect
+
+These concerns are split across **session** (join only if presence room exists and Postgres session is live; leave/end handlers), **participant controls** (init/ack/clear), and **presence** (socket membership, reconnect timer, multi-tab). Together they document the intended realtime room behavior without integration tests.
 
 ---
 
@@ -205,9 +232,10 @@ vi.mock("../../../lib/prisma.js", () => ({ prisma: { ... } }));
 
 Use `vi.hoisted()` for mock function references so Vitest’s hoisted `vi.mock` factories can access them.
 
-### Session → presence + gateway
+### Session → presence + controls + gateway
 
 - `presence.service` exports: `initializePresenceRoom`, `hasPresenceRoom`, `joinPresence`, `leavePresence`, `clearPresenceRoom`
+- `participant-controls.service` exports: `initializeSessionParticipantControls`, join snapshot helpers, clear on terminate
 - `realtime.gateway` exports: `emitToRoom`, `disconnectRoom`, `emitSocketError`
 
 ### Presence → state + gateway
@@ -225,9 +253,8 @@ Presence reconnect tests use `vi.useFakeTimers()` and `vi.advanceTimersByTimeAsy
 
 | Module / layer | Reason |
 |----------------|--------|
-| `cursor.service.ts` | Relay + `isSessionLive` guard implemented; unit tests not added yet |
 | `video.service.ts` | LiveKit JWT helper; thin wrapper around SDK |
-| `presence.state.ts` / `connection.state.ts` | Persistence layers; covered indirectly via in-memory stand-ins |
+| `presence.state.ts` / `connection.state.ts` / `participant-controls.state.ts` | Persistence layers; covered indirectly via in-memory stand-ins |
 | Socket handlers (`*.socket.ts`), `realtime.gateway` init | Wiring; would be integration tests |
 | `auth-socket.middleware.ts`, `require-auth.ts`, route handlers | HTTP/socket plumbing outside `.service.ts` scope |
 | `apps/frontend` | No Vitest project yet (`call-room`, `lesson-canvas`, `cursor.ts`, etc.) |
@@ -241,7 +268,7 @@ Presence reconnect tests use `vi.useFakeTimers()` and `vi.advanceTimersByTimeAsy
 ### API — same service-layer style
 
 - **`video.service`:** missing env vars, grant payload, JWT shape (mock `livekit-server-sdk` if needed).
-- **`cursor.service`:** `isSessionLive` rejection, `unbindSocket`, `emitSocketError` on stale session; relay rules.
+- **`cursor.service`:** expand coverage for `isSessionLive` rejection, `unbindSocket`, `emitSocketError` on stale session.
 - **`presence.state`:** optional focused tests with Redis mock or `ioredis-mock` if Redis logic grows.
 - **Session edge cases:** e.g. `handleEndSession` with invalid payload string; concurrent `startSession` (if you add locking).
 
@@ -257,7 +284,7 @@ Presence reconnect tests use `vi.useFakeTimers()` and `vi.advanceTimersByTimeAsy
 - `lib/cursor.ts`: normalize, throttle, distance threshold.
 - `lib/realtime.ts`: payload parsers.
 - `CallRoom` / LiveKit: mock `livekit-client`, cancelled connect handling.
-- React components: `LessonCanvas`, `PresencePanel` (Vitest + React Testing Library or browser env).
+- React components: `LessonCanvas`, `ParticipantControlsPanel` (Vitest + React Testing Library or browser env).
 
 ### Contracts and CI
 
@@ -302,7 +329,7 @@ If a test needs env read at **module load time** (like `DISCONNECT_TIMEOUT_MS` i
 
 ```bash
 pnpm --filter api test
-# ✓ 3 files, 36 tests — auth (7), session (17), presence (12)
+# ✓ 5 files, 50 tests — auth (7), session (21), participant-controls (6), presence (14), cursor (2)
 ```
 
 Expected: all green with no running API, Redis, or Postgres.

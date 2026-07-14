@@ -29,7 +29,7 @@ export function OverviewPanel() {
             "Express 5 :4000",
             "Socket.IO + Redis adapter",
             "Prisma → PostgreSQL",
-            "Presence + connection state"
+            "Presence + controls + connections"
           ]}
         />
         <ArchBox
@@ -37,7 +37,7 @@ export function OverviewPanel() {
           accent="emerald"
           items={[
             "PostgreSQL (users, classes, sessions)",
-            "Redis (presence, connections, pub/sub)",
+            "Redis (presence, controls, connections)",
             "LiveKit Cloud (media rooms)"
           ]}
         />
@@ -55,19 +55,19 @@ export function OverviewPanel() {
       <SectionHeading>Monorepo data flow</SectionHeading>
       <p className="mb-4 text-sm leading-6 text-slate-600">
         REST handles auth, session setup, and LiveKit token minting. Socket.IO
-        carries presence, session lifecycle, and cursor relay. Media flows
-        browser-to-LiveKit; the API validates permissions but never proxies
-        WebRTC.
+        carries presence, participant controls, session lifecycle, and cursor
+        relay. Media flows browser-to-LiveKit; the API validates permissions but
+        never proxies WebRTC.
       </p>
       <CodeBlock title="End-to-end classroom path">
 {`Browser (apps/frontend)
   → REST: login, start/join session, video token
-  → Socket.IO: join_session, presence, cursors, end_session
+  → Socket.IO: join_session (ack controls), presence, cursors, participant controls
   → LiveKit: WebRTC audio/video (direct to cloud)
 
 API (apps/api)
-  → Postgres: users, classes, LiveSession records
-  → Redis: presence roster, socket-to-room bindings
+  → Postgres: users (with name), classes + ClassStudent, LiveSession
+  → Redis: presence roster, participant controls, socket-to-room bindings
   → LiveKit SDK: mint short-lived room tokens
 
 Shared (packages/contracts)

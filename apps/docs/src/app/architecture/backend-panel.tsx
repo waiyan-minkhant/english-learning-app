@@ -11,19 +11,25 @@ const apiModules = [
     name: "Auth",
     path: "modules/auth/",
     responsibility:
-      "Register, login, JWT verification. HTTP routes set httpOnly cookies; socket middleware reads the same cookie on connection."
+      "Register, login, JWT verification. Users store display name. HTTP routes set httpOnly cookies; socket middleware reads the same cookie on connection."
   },
   {
     name: "Session",
     path: "modules/session/",
     responsibility:
-      "REST start/join for teachers and students. Socket handlers for join_session, leave_session, and end_session. Owns DB session records, isSessionLive Postgres checks, and coordinates termination."
+      "REST start/join for teachers and students. Socket handlers for join_session (acked with participant controls), leave_session, and end_session. Owns DB session records, isSessionLive checks, and coordinates termination."
+  },
+  {
+    name: "Session / Participant controls",
+    path: "modules/session/services/participant-controls.service.ts",
+    responsibility:
+      "Redis map of per-user microphoneEnabled / cursorEnabled. Init on session start, ensure on join, teacher-only single and bulk updates, clear on end. canUseCursor / canUseMicrophone gate cursor relay and client media."
   },
   {
     name: "Realtime / Presence",
     path: "modules/realtime/",
     responsibility:
-      "Redis-backed presence per room, disconnect/reconnect timers, teacher_offline and auto-end scheduling. Emits presence_updated and participant events."
+      "Redis-backed presence per room (email, name, role, status, socketIds). Disconnect/reconnect timers, teacher_offline and auto-end scheduling. Emits presence_updated and participant events."
   },
   {
     name: "Realtime / Connection",
@@ -35,7 +41,7 @@ const apiModules = [
     name: "Realtime / Cursor",
     path: "modules/realtime/services/cursor.service.ts",
     responsibility:
-      "Validates normalized cursor payloads via connection.service, checks isSessionLive before relay, emits cursor_moved to peers (sender excluded)."
+      "Validates normalized cursor payloads via connection.service, checks isSessionLive and canUseCursor before relay, emits cursor_moved to peers (sender excluded)."
   },
   {
     name: "Video",
@@ -58,11 +64,11 @@ export function BackendPanel() {
         <SectionHeading>High-level overview</SectionHeading>
         <p className="mb-6 text-sm leading-6 text-slate-600">
           The API is the source of truth for auth, session records, and realtime
-          orchestration. Redis holds ephemeral presence and connection mappings;
-          Postgres holds durable user, class, and live-session state. Two cleanup
-          layers protect against stale Redis: sliding TTL on all realtime keys,
-          and Postgres <code>LiveSession.status</code> checks on join and
-          cursor actions.
+          orchestration. Redis holds ephemeral presence, connection mappings, and
+          participant controls; Postgres holds durable user, class, and
+          live-session state. Two cleanup layers protect against stale Redis:
+          sliding TTL on all realtime keys, and Postgres{" "}
+          <code>LiveSession.status</code> checks on join and cursor actions.
         </p>
         <div className="grid gap-3 lg:grid-cols-3">
           <ArchBox
@@ -70,7 +76,7 @@ export function BackendPanel() {
             accent="brand"
             items={[
               "REST routes (auth, session, video)",
-              "Socket.IO handlers (session, cursor)",
+              "Socket.IO (session, cursor, controls)",
               "Cookie JWT middleware"
             ]}
           />
@@ -79,9 +85,9 @@ export function BackendPanel() {
             accent="slate"
             items={[
               "session.service (DB + sockets)",
+              "participant-controls.service",
               "presence.service (Redis roster)",
-              "connection.service (socket map)",
-              "cursor.service (relay guard)"
+              "connection + cursor (relay guards)"
             ]}
           />
           <ArchBox
@@ -139,7 +145,8 @@ Response / socket event (also schema-checked where applicable)`}
           steps={[
             {
               label: "POST /sessions/start",
-              detail: "requireRole(teacher) — finds teacher's Class in Postgres"
+              detail:
+                "requireRole(teacher) — finds teacher's Class and enrolled students"
             },
             {
               label: "Create LiveSession",
@@ -150,13 +157,14 @@ Response / socket event (also schema-checked where applicable)`}
               detail: "Sets Redis room marker session:{sessionId} with TTL"
             },
             {
-              label: "Return { roomId }",
-              detail: "Frontend navigates to /call/{roomId}"
+              label: "initializeSessionParticipantControls",
+              detail:
+                "Teacher: mic + cursor on; each student: mic on, cursor off"
             },
             {
-              label: "Socket join_session",
+              label: "Return { roomId } → socket join_session",
               detail:
-                "Redis room check → Postgres isSessionLive → joinPresence, or socket_error if stale"
+                "Frontend navigates to /call/{roomId}; join ack returns participantControls map"
             }
           ]}
         />
@@ -165,7 +173,7 @@ Response / socket event (also schema-checked where applicable)`}
           steps={[
             {
               label: "POST /sessions/join",
-              detail: "requireRole(student) — finds student's Class"
+              detail: "requireRole(student) — finds student's Class enrollment"
             },
             {
               label: "Find live LiveSession",
@@ -176,8 +184,13 @@ Response / socket event (also schema-checked where applicable)`}
               detail: "roomId, status, timestamps — frontend opens call page"
             },
             {
-              label: "Socket join_session + video token",
-              detail: "Presence join + POST /video/token for LiveKit room"
+              label: "Socket join_session (acked)",
+              detail:
+                "Presence join + ensureParticipantControlsForUser; ack { roomId, participantControls }"
+            },
+            {
+              label: "POST /video/token",
+              detail: "LiveKit room token for WebRTC"
             }
           ]}
         />
@@ -188,23 +201,29 @@ Response / socket event (also schema-checked where applicable)`}
         <p>
           Event names are constants in{" "}
           <code>packages/contracts/socket/events.ts</code>. Rooms use the session{" "}
-          <code>roomId</code> as the Socket.IO room name.
+          <code>roomId</code> as the Socket.IO room name.{" "}
+          <code>join_session</code> is acknowledged with the controls snapshot.
         </p>
         <div className="not-prose grid gap-4 sm:grid-cols-2">
           <CodeBlock title="Client → server">
-{`join_session    sessionId (string)
-leave_session   sessionId
-end_session     sessionId (teacher only)
-move_cursor     { sessionId, x, y }`}
+{`join_session                      sessionId (acked)
+leave_session                     sessionId
+end_session                       sessionId (teacher only)
+move_cursor                       { sessionId, x, y }
+update_participant_controls       { sessionId, userId, mic?, cursor? }
+update_bulk_participant_controls  { sessionId, target: "all_students", … }`}
           </CodeBlock>
           <CodeBlock title="Server → client">
-{`presence_updated        { sessionId, participants[] }
-participant_left        { sessionId, userId }
-participant_disconnected { sessionId, userId }
-teacher_offline         { sessionId, userId }
-session_ended           { sessionId }
-cursor_moved            { sessionId, userId, x, y }
-socket_error            { request, code, message }`}
+{`presence_updated             { sessionId, participants[] }
+participant_left             { sessionId, userId }
+participant_disconnected     { sessionId, userId }
+teacher_offline              { sessionId, userId }
+session_ended                { sessionId }
+cursor_moved                 { sessionId, userId, x, y }
+participant_controls_updated { sessionId, participantControls }
+socket_error                 { request, code, message }
+
+join_session ack → { roomId, participantControls }`}
           </CodeBlock>
         </div>
       </section>
@@ -212,11 +231,13 @@ socket_error            { request, code, message }`}
       <section className="prose-docs mb-12">
         <h3>Redis realtime state</h3>
         <p>
-          Connection and presence are stored in separate Redis namespaces.
-          Connection state is infra (socket-to-room mapping); presence state is
-          domain (participant roster and status). Services talk to{" "}
-          <code>connection.service</code> and <code>presence.state</code> — cursor
-          never imports presence for socket lookup.
+          Connection, presence, and participant controls use separate Redis
+          namespaces. Connection state is infra (socket-to-room mapping);
+          presence is the participant roster; controls are teacher-owned
+          permission flags. Services talk to <code>connection.service</code>,{" "}
+          <code>presence.state</code>, and{" "}
+          <code>participant-controls.state</code> — cursor never imports presence
+          for socket lookup.
         </p>
         <p>
           All realtime keys use sliding TTL via{" "}
@@ -227,13 +248,16 @@ socket_error            { request, code, message }`}
           <code>socket_error</code> with <code>SESSION_NOT_LIVE</code>.
         </p>
         <CodeBlock title="Key patterns">
-{`connection:socket:{socketId}  → { roomId, userId }  (TTL on bind)
+{`connection:socket:{socketId}     → { roomId, userId }  (TTL on bind)
 
-session:{sessionId}           → "1" (room exists marker, TTL)
-session:{sessionId}:presence  → hash { userId → JSON entry }  (TTL refreshed on write)
+session:{sessionId}              → "1" (room exists marker, TTL)
+session:{sessionId}:presence     → hash { userId → JSON entry }
 
-Presence entry: { email, role, status, socketIds[] }
-Status: online | reconnecting | offline`}
+participant:controls:{sessionId} → hash { userId → { microphoneEnabled, cursorEnabled } }
+
+Presence entry: { email, name, role, status, socketIds[] }
+Status: online | reconnecting | offline
+Defaults: teacher mic+cursor on; students mic on, cursor off`}
         </CodeBlock>
         <CodeBlock title="socket_error payload">
 {`{
@@ -270,7 +294,7 @@ Status: online | reconnecting | offline`}
             {
               label: "Teacher auto-end",
               detail:
-                "Dynamic import autoEndSession → end DB session → terminateSession"
+                "Dynamic import autoEndSession → end DB session → terminateSession (clears presence + controls)"
             }
           ]}
         />
@@ -302,12 +326,16 @@ Status: online | reconnecting | offline`}
         <p>Core entities and relationships:</p>
         <ul>
           <li>
-            <strong>User</strong> — email, passwordHash, role (teacher |
+            <strong>User</strong> — email, name, passwordHash, role (teacher |
             student)
           </li>
           <li>
-            <strong>Class</strong> — links one teacher, one student, and a
-            lessonId
+            <strong>Class</strong> — links one teacher, a lessonId, and many
+            students via <strong>ClassStudent</strong>
+          </li>
+          <li>
+            <strong>ClassStudent</strong> — enrollment join table (classId,
+            studentId)
           </li>
           <li>
             <strong>LiveSession</strong> — unique roomId, status (scheduled |
@@ -325,11 +353,18 @@ Status: online | reconnecting | offline`}
           times out. That import uses dynamic <code>import()</code> inside the
           timer callback to break the static cycle at load time.
         </p>
+        <h4>Participant control defaults</h4>
+        <p>
+          Teachers always have microphone and cursor enabled and are never
+          bulk-muted. Students default to microphone on and cursor off so the
+          teacher can open canvas collaboration intentionally. An in-memory
+          store mirrors Redis for Vitest without Docker.
+        </p>
         <h4>Normalized cursor coordinates</h4>
         <p>
           Cursors use [0, 1] relative to the canvas bounding rect so peers stay
-          aligned when viewport or sidebar size differs. The server relays only;
-          it does not store cursor history.
+          aligned when viewport or sidebar size differs. The server relays only
+          when <code>canUseCursor</code> allows; it does not store cursor history.
         </p>
         <h4>Gateway indirection</h4>
         <p>

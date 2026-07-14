@@ -3,6 +3,7 @@ import { clientEvents, serverEvents } from "@english-learning/contracts/socket/e
 import { cursorMovePayloadSchema } from "@english-learning/contracts/socket/schema";
 import type { Socket } from "socket.io";
 import { isSessionLive } from "../../session/services/session.service.js";
+import { canUseCursor } from "../../session/services/participant-controls.service.js";
 import { emitSocketError } from "../realtime.gateway.js";
 import * as connectionService from "./connection.service.js";
 
@@ -31,6 +32,8 @@ export async function handleMoveCursor(socket: Socket, payload: unknown) {
     });
     return;
   }
+
+  if (!(await canUseCursor(sessionId, user))) return;
 
   socket.to(sessionId).emit(serverEvents.cursorMoved, {
     sessionId,

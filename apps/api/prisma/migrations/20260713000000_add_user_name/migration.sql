@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "name" TEXT;
+
+-- Backfill existing users from email local-part
+UPDATE "User" SET "name" = split_part("email", '@', 1) WHERE "name" IS NULL;
+
+ALTER TABLE "User" ALTER COLUMN "name" SET NOT NULL;

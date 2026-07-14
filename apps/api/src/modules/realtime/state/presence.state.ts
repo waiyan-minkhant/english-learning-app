@@ -5,6 +5,7 @@ import { REDIS_REALTIME_TTL_SECONDS } from "../../../shared/redis/redis.ttl.js";
 
 export type PresenceEntryRecord = {
   email: string;
+  name: string;
   role: AuthUser["role"];
   status: PresenceStatus;
   socketIds: string[];

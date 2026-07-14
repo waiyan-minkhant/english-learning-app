@@ -4,14 +4,14 @@ import { realtimeSessionSchema } from "@english-learning/contracts/realtime";
 export const classSchema = z.object({
   id: z.string().uuid(),
   teacherId: z.string().uuid(),
-  studentId: z.string().uuid(),
+  studentIds: z.array(z.string().uuid()),
   lessonId: z.string().uuid(),
   sessions: z.array(realtimeSessionSchema)
 });
 
 export const classCreateSchema = z.object({
   teacherId: z.string().uuid(),
-  studentId: z.string().uuid(),
+  studentIds: z.array(z.string().uuid()).min(1),
   lessonId: z.string().uuid()
 });
 

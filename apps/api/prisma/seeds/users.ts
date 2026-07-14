@@ -9,9 +9,15 @@ export const DEMO_EMAILS = {
   student2: "student2@demo.local"
 } as const;
 
+export const DEMO_NAMES = {
+  teacher: "Clair",
+  student1: "Aung Aung",
+  student2: "Kyaw Kyaw"
+} as const;
+
 export type SeededUsers = {
-  teacher: { id: string; email: string };
-  students: { id: string; email: string }[];
+  teacher: { id: string; email: string; name: string };
+  students: { id: string; email: string; name: string }[];
 };
 
 export async function seedUsers(prisma: PrismaClient): Promise<SeededUsers> {
@@ -19,35 +25,38 @@ export async function seedUsers(prisma: PrismaClient): Promise<SeededUsers> {
 
   const teacher = await prisma.user.upsert({
     where: { email: DEMO_EMAILS.teacher },
-    update: { role: "teacher" },
+    update: { role: "teacher", name: DEMO_NAMES.teacher },
     create: {
       email: DEMO_EMAILS.teacher,
+      name: DEMO_NAMES.teacher,
       passwordHash,
       role: "teacher"
     },
-    select: { id: true, email: true }
+    select: { id: true, email: true, name: true }
   });
 
   const student1 = await prisma.user.upsert({
     where: { email: DEMO_EMAILS.student1 },
-    update: { role: "student" },
+    update: { role: "student", name: DEMO_NAMES.student1 },
     create: {
       email: DEMO_EMAILS.student1,
+      name: DEMO_NAMES.student1,
       passwordHash,
       role: "student"
     },
-    select: { id: true, email: true }
+    select: { id: true, email: true, name: true }
   });
 
   const student2 = await prisma.user.upsert({
     where: { email: DEMO_EMAILS.student2 },
-    update: { role: "student" },
+    update: { role: "student", name: DEMO_NAMES.student2 },
     create: {
       email: DEMO_EMAILS.student2,
+      name: DEMO_NAMES.student2,
       passwordHash,
       role: "student"
     },
-    select: { id: true, email: true }
+    select: { id: true, email: true, name: true }
   });
 
   console.log("✓ Seeded users (teacher + 2 students)");

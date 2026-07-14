@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
 import { useClassroomStore } from "@/features/classroom/store/classroomStore";
 import { useCursorStore } from "@/features/classroom/store/cursorStore";
+import { useParticipantControlsStore } from "@/features/classroom/store/participantControlsStore";
 import { usePresenceStore } from "@/features/classroom/store/presenceStore";
-import { emitJoinSession, emitLeaveSession } from "@/lib/socket/emit";
+import { hydrateParticipantControls } from "@/features/realtime/hooks/useParticipantControlsSync";
+import { emitJoinSessionWithAck, emitLeaveSession } from "@/lib/socket/emit";
 import { createSocket, disconnectSocket } from "@/lib/socket/socket";
 
 export function useRealtimeConnection(roomId: string) {
@@ -14,6 +16,21 @@ export function useRealtimeConnection(roomId: string) {
   const resetPresence = usePresenceStore((state) => state.reset);
   const resetCursor = useCursorStore((state) => state.reset);
   const resetClassroom = useClassroomStore((state) => state.reset);
+  const resetParticipantControls = useParticipantControlsStore(
+    (state) => state.reset
+  );
+
+  const resetAll = useCallback(() => {
+    resetPresence();
+    resetCursor();
+    resetClassroom();
+    resetParticipantControls();
+  }, [
+    resetPresence,
+    resetCursor,
+    resetClassroom,
+    resetParticipantControls
+  ]);
 
   const leaveSession = useCallback(() => {
     const socket = socketRef.current;
@@ -23,22 +40,21 @@ export function useRealtimeConnection(roomId: string) {
     emitLeaveSession(socket, roomId);
     disconnectSocket(socket);
     socketRef.current = null;
-    resetPresence();
-    resetCursor();
-    resetClassroom();
-  }, [roomId, resetPresence, resetCursor, resetClassroom]);
+    resetAll();
+  }, [roomId, resetAll]);
 
   useEffect(() => {
     manualLeaveRef.current = false;
-    resetPresence();
-    resetCursor();
-    resetClassroom();
+    resetAll();
 
     const socket = createSocket();
     socketRef.current = socket;
 
     const onConnect = () => {
-      emitJoinSession(socket, roomId);
+      void emitJoinSessionWithAck(socket, roomId).then((snapshot) => {
+        if (!snapshot) return;
+        hydrateParticipantControls(snapshot.participantControls);
+      });
     };
 
     socket.on("connect", onConnect);
@@ -47,11 +63,9 @@ export function useRealtimeConnection(roomId: string) {
       socket.off("connect", onConnect);
       disconnectSocket(socket);
       socketRef.current = null;
-      resetPresence();
-      resetCursor();
-      resetClassroom();
+      resetAll();
     };
-  }, [roomId, resetPresence, resetCursor, resetClassroom]);
+  }, [roomId, resetAll]);
 
   return {
     socketRef,

@@ -1,8 +1,44 @@
+import type {
+  UpdateBulkParticipantControlsPayload,
+  UpdateParticipantControlsPayload
+} from "@english-learning/contracts/socket/schema";
 import type { Socket } from "socket.io-client";
 import { clientEvents } from "@/lib/socket/events";
+import {
+  parseJoinSessionSuccessPayload,
+  type JoinSessionSuccessPayload
+} from "@/lib/socket/listeners";
+
+type JoinSessionAckResponse =
+  | JoinSessionSuccessPayload
+  | { error: string };
+
+export function emitJoinSessionWithAck(
+  socket: Socket,
+  sessionId: string
+): Promise<JoinSessionSuccessPayload | null> {
+  return new Promise((resolve) => {
+    socket.emit(
+      clientEvents.joinSession,
+      sessionId,
+      (response: JoinSessionAckResponse) => {
+        if (!response || "error" in response) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          resolve(parseJoinSessionSuccessPayload(response));
+        } catch {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
 
 export function emitJoinSession(socket: Socket, sessionId: string) {
-  socket.emit(clientEvents.joinSession, sessionId);
+  void emitJoinSessionWithAck(socket, sessionId);
 }
 
 export function emitLeaveSession(socket: Socket, sessionId: string) {
@@ -18,4 +54,18 @@ export function emitMoveCursor(
   payload: { sessionId: string; x: number; y: number }
 ) {
   socket.emit(clientEvents.moveCursor, payload);
+}
+
+export function emitUpdateParticipantControls(
+  socket: Socket,
+  payload: UpdateParticipantControlsPayload
+) {
+  socket.emit(clientEvents.updateParticipantControls, payload);
+}
+
+export function emitUpdateBulkParticipantControls(
+  socket: Socket,
+  payload: UpdateBulkParticipantControlsPayload
+) {
+  socket.emit(clientEvents.updateBulkParticipantControls, payload);
 }

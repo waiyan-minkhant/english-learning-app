@@ -3,16 +3,21 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { UsersIcon } from "@/components/icons";
 import { Button } from "@/components/ui";
-import { ParticipantListPanel } from "@/features/classroom/components/PaticipantList";
+import { ParticipantControlsPanel } from "@/features/classroom/components/ParticipantControlsPanel";
 import { countActiveParticipants } from "@/features/classroom/lib/participantVisibility";
 import { usePresenceStore } from "@/features/classroom/store/presenceStore";
+import type { ParticipantControlsActions } from "@/features/realtime/hooks/useParticipantControlsSync";
 import { cn } from "@/utils/cn";
 
-type ParticipantListPopoverProps = {
+type ParticipantControlsPopoverProps = {
   className?: string;
-};
+} & ParticipantControlsActions;
 
-export function ParticipantListPopover({ className }: ParticipantListPopoverProps) {
+export function ParticipantControlsPopover({
+  className,
+  updateParticipantControls,
+  updateBulkParticipantControls
+}: ParticipantControlsPopoverProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
@@ -47,20 +52,23 @@ export function ParticipantListPopover({ className }: ParticipantListPopoverProp
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {open ? (
-        <div className="absolute bottom-full right-0 z-30 mb-2">
-          <ParticipantListPanel id={panelId} />
+        <div className="absolute bottom-full right-0 z-30 mb-2 drop-shadow-lg">
+          <ParticipantControlsPanel
+            id={panelId}
+            updateParticipantControls={updateParticipantControls}
+            updateBulkParticipantControls={updateBulkParticipantControls}
+          />
         </div>
       ) : null}
 
       <div className="relative">
         <Button
           type="button"
-          // variant="ghost"
           size="icon"
           className="rounded-pill border-border bg-primary shadow-md"
           aria-expanded={open}
           aria-controls={panelId}
-          aria-label="Show participants"
+          aria-label="Show participants and controls"
           onClick={() => setOpen((current) => !current)}
         >
           <UsersIcon size={20} className="text-white" />

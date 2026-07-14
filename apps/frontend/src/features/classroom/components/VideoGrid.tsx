@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { PhoneOffIcon } from "@/components/icons";
 import { Button } from "@/components/ui";
 import { useCurrentUser } from "@/features/auth/store/authStore";
 import { ClassroomControlPanel } from "@/features/classroom/components/ClassroomControlPanel";
 import { ParticipantVideoTile } from "@/features/classroom/components/ParticipantVideoTile";
-import { isRemoteVideoTileVisible } from "@/features/classroom/lib/participantVisibility";
-import { useClassroomMedia } from "@/features/classroom/context/ClassroomMediaContext";
+import {
+  useClassroomMedia,
+  useRemoteParticipantVideo
+} from "@/features/classroom/context/ClassroomMediaContext";
+import { useParticipantControls } from "@/features/classroom/hooks/useParticipantControls";
+import {
+  isRemoteVideoTileVisible,
+  sortParticipantsForDisplay
+} from "@/features/classroom/lib/participantVisibility";
+import { getVideoScrollViewportStyle } from "@/features/classroom/lib/videoTileLayout";
 import { usePresenceStore } from "@/features/classroom/store/presenceStore";
 import { cn } from "@/utils/cn";
-
-function displayNameFromEmail(email: string) {
-  const local = email.split("@")[0] ?? email;
-  return local
-    .split(/[._-]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+import type { Presence } from "@/lib/socket/listeners";
 
 function waitingFallback(name: string, fallback: string) {
   return name === "Waiting…" ? fallback : name.charAt(0).toUpperCase();
@@ -29,107 +29,122 @@ type VideoGridProps = {
   onEndClass?: () => void;
 };
 
+function RemoteParticipantVideoTile({
+  participant
+}: {
+  participant: Presence;
+}) {
+  const { videoRef, showVideo } = useRemoteParticipantVideo(participant.userId);
+
+  return (
+    <ParticipantVideoTile
+      role={participant.role}
+      name={participant.name}
+      fallback={waitingFallback(
+        participant.name,
+        participant.role === "teacher" ? "T" : "S"
+      )}
+      showVideo={showVideo}
+      videoRef={videoRef}
+    />
+  );
+}
+
 export function VideoGrid({ className, onEndClass }: VideoGridProps) {
   const participants = usePresenceStore((state) => state.participants);
   const currentUser = useCurrentUser();
   const {
     localVideoRef,
-    remoteVideoRef,
     remoteAudioContainerRef,
     micEnabled,
     camEnabled,
     connected,
-    hasRemoteParticipant,
-    remoteCamEnabled,
     toggleMic,
     toggleCam,
     syncLocalVideo,
-    syncRemoteVideo
+    syncRemoteVideos
   } = useClassroomMedia();
+  const { microphoneEnabled } = useParticipantControls();
 
   useEffect(() => {
     syncLocalVideo();
-    syncRemoteVideo();
-  }, [syncLocalVideo, syncRemoteVideo]);
+    syncRemoteVideos();
+  }, [syncLocalVideo, syncRemoteVideos]);
 
-  const teacher = participants.find((p) => p.role === "teacher");
-  const studentParticipant = participants.find((p) => p.role === "student");
+  const otherParticipants = useMemo(() => {
+    return sortParticipantsForDisplay(
+      participants.filter(
+        (participant) => participant.userId !== currentUser?.id
+      )
+    ).filter((participant) => isRemoteVideoTileVisible(participant));
+  }, [participants, currentUser?.id]);
 
-  const teacherName = teacher
-    ? displayNameFromEmail(teacher.email)
-    : "Waiting…";
-
-  const studentName =
-    studentParticipant != null
-      ? displayNameFromEmail(studentParticipant.email)
-      : currentUser?.role === "student"
-        ? displayNameFromEmail(currentUser.email)
-        : "Waiting…";
-
-  const isLocalStudent = currentUser?.role === "student";
-  const isLocalTeacher = currentUser?.role === "teacher";
-  const showStudentTile =
-    isLocalStudent || isRemoteVideoTileVisible(studentParticipant);
-  const showTeacherTile =
-    isLocalTeacher || isRemoteVideoTileVisible(teacher);
+  const localName = currentUser?.name ?? "You";
+  const localRole = currentUser?.role ?? "student";
   const localShowVideo = camEnabled && connected;
-  const remoteShowVideo = remoteCamEnabled && hasRemoteParticipant;
-
-  const studentShowVideo = isLocalStudent ? localShowVideo : remoteShowVideo;
-  const teacherShowVideo = isLocalStudent ? remoteShowVideo : localShowVideo;
-
-  const studentVideoRef = isLocalStudent ? localVideoRef : remoteVideoRef;
-  const teacherVideoRef = isLocalStudent ? remoteVideoRef : localVideoRef;
+  const totalTileCount = 1 + otherParticipants.length;
+  const videoScrollStyle = getVideoScrollViewportStyle(totalTileCount);
 
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col justify-start gap-4 overflow-y-auto bg-background p-4",
+        "flex h-full min-h-0 flex-col overflow-hidden bg-background p-4",
         className
       )}
     >
-      {showStudentTile ? (
-        <ParticipantVideoTile
-          role="student"
-          name={studentName}
-          fallback={waitingFallback(studentName, "S")}
-          showVideo={studentShowVideo}
-          videoRef={studentVideoRef}
-        />
-      ) : null}
-
-      {showTeacherTile ? (
-        <ParticipantVideoTile
-          role="teacher"
-          name={teacherName}
-          fallback={waitingFallback(teacherName, "T")}
-          showVideo={teacherShowVideo}
-          videoRef={teacherVideoRef}
-        />
-      ) : null}
-
-      <ClassroomControlPanel
-        camEnabled={camEnabled}
-        micEnabled={micEnabled}
-        connected={connected}
-        toggleCam={toggleCam}
-        toggleMic={toggleMic}
-      />
-
-      {onEndClass ? (
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          className="w-full shrink-0 text-white"
-          aria-label="End class"
-          onClick={onEndClass}
-          disabled={!connected}
+      {videoScrollStyle ? (
+        <div
+          className="min-h-0 flex-none overflow-hidden"
+          style={videoScrollStyle}
         >
-          <PhoneOffIcon size={16} className="mr-2 text-primary-foreground" />
-          End class
-        </Button>
+          <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden overscroll-contain">
+            <ParticipantVideoTile
+              role={localRole}
+              name={localName}
+              fallback={waitingFallback(
+                localName,
+                localRole === "teacher" ? "T" : "S"
+              )}
+              showVideo={localShowVideo}
+              videoRef={localVideoRef}
+              isYou
+            />
+
+            {otherParticipants.map((participant) => (
+              <RemoteParticipantVideoTile
+                key={participant.userId}
+                participant={participant}
+              />
+            ))}
+          </div>
+        </div>
       ) : null}
+
+      <div className="flex shrink-0 flex-col gap-4 pt-4">
+        <ClassroomControlPanel
+          camEnabled={camEnabled}
+          micEnabled={micEnabled}
+          connected={connected}
+          micAllowed={microphoneEnabled}
+          toggleCam={toggleCam}
+          toggleMic={toggleMic}
+        />
+
+        {onEndClass ? (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full text-white"
+            aria-label="End class"
+            onClick={onEndClass}
+            disabled={!connected}
+          >
+            <PhoneOffIcon size={16} className="mr-2 text-primary-foreground" />
+            End class
+          </Button>
+        ) : null}
+      </div>
 
       <div ref={remoteAudioContainerRef} className="hidden" aria-hidden />
     </div>

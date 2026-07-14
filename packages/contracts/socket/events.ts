@@ -2,7 +2,9 @@ export const clientEvents = {
   joinSession: "join_session",
   leaveSession: "leave_session",
   endSession: "end_session",
-  moveCursor: "move_cursor"
+  moveCursor: "move_cursor",
+  updateParticipantControls: "update_participant_controls",
+  updateBulkParticipantControls: "update_bulk_participant_controls"
 } as const;
 
 export const serverEvents = {
@@ -12,7 +14,8 @@ export const serverEvents = {
   teacherOffline: "teacher_offline",
   sessionEnded: "session_ended",
   cursorMoved: "cursor_moved",
-  socketError: "socket_error"
+  socketError: "socket_error",
+  participantControlsUpdated: "participant_controls_updated"
 } as const;
 
 export type ClientEvent = (typeof clientEvents)[keyof typeof clientEvents];

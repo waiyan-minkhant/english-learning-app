@@ -5,7 +5,7 @@ import { useState, type RefObject } from "react";
 import type { Socket } from "socket.io-client";
 import { Button, Text } from "@/components/ui";
 import { CursorOverlay } from "@/features/classroom/components/CursorOverlay";
-import { ParticipantListPopover } from "@/features/classroom/components/ParticipantListPopover";
+import { ParticipantControlsPopover } from "@/features/classroom/components/ParticipantControlsPopover";
 import { TeacherOfflineModal } from "@/features/classroom/components/TeacherOfflineModal";
 import { Toolbar } from "@/features/classroom/components/Toolbar";
 import { VideoGrid } from "@/features/classroom/components/VideoGrid";
@@ -14,6 +14,7 @@ import type { SessionUser } from "@/features/auth/lib/auth";
 import { LessonContainer } from "@/features/lesson/components/LessonContainer";
 import type { VideoTokenResponse } from "@/features/classroom/lib/video";
 import { useUiStore } from "@/features/ui/store/uiStore";
+import type { ParticipantControlsActions } from "@/features/realtime/hooks/useParticipantControlsSync";
 import { cn } from "@/utils/cn";
 
 type ClassroomViewProps = {
@@ -23,7 +24,7 @@ type ClassroomViewProps = {
   session: VideoTokenResponse;
   onEndClass: () => void;
   onEndCall: () => void;
-};
+} & ParticipantControlsActions;
 
 export function ClassroomView({
   roomId,
@@ -31,7 +32,9 @@ export function ClassroomView({
   socketRef,
   session,
   onEndClass,
-  onEndCall
+  onEndCall,
+  updateParticipantControls,
+  updateBulkParticipantControls
 }: ClassroomViewProps) {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const sidebarOpen = useUiStore((state) => state.classroomSidebarOpen);
@@ -69,7 +72,11 @@ export function ClassroomView({
             <CursorOverlay socketRef={socketRef} roomId={roomId} />
           </div>
           <Toolbar />
-          <ParticipantListPopover className="absolute bottom-6 right-6 z-30" />
+          <ParticipantControlsPopover
+            className="absolute bottom-6 right-6 z-30"
+            updateParticipantControls={updateParticipantControls}
+            updateBulkParticipantControls={updateBulkParticipantControls}
+          />
         </section>
 
         <aside

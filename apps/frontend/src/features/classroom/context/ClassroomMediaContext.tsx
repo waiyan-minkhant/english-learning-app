@@ -11,6 +11,8 @@ import {
   type RemoteTrackPublication,
   type VideoTrack
 } from "livekit-client";
+import { useParticipantControls } from "@/features/classroom/hooks/useParticipantControls";
+import { useMediaPreferencesStore } from "@/features/media/store/mediaPreferencesStore";
 import {
   createContext,
   useCallback,
@@ -24,18 +26,20 @@ import {
 
 type ClassroomMediaContextValue = {
   localVideoRef: RefObject<HTMLDivElement | null>;
-  remoteVideoRef: RefObject<HTMLDivElement | null>;
   remoteAudioContainerRef: RefObject<HTMLDivElement | null>;
   micEnabled: boolean;
   camEnabled: boolean;
   connected: boolean;
-  hasRemoteParticipant: boolean;
-  remoteCamEnabled: boolean;
+  remoteCamEnabledByUserId: Record<string, boolean>;
+  registerRemoteVideoContainer: (
+    userId: string,
+    element: HTMLDivElement | null
+  ) => void;
   toggleMic: () => Promise<void>;
   toggleCam: () => Promise<void>;
   endCall: () => Promise<void>;
   syncLocalVideo: () => void;
-  syncRemoteVideo: () => void;
+  syncRemoteVideos: () => void;
 };
 
 const ClassroomMediaContext = createContext<ClassroomMediaContextValue | null>(
@@ -54,27 +58,20 @@ function isVideoPublication(
   return publication.kind === Track.Kind.Video;
 }
 
+function isRemoteVideoShowing(publication: RemoteTrackPublication) {
+  return (
+    isVideoPublication(publication) &&
+    publication.isSubscribed &&
+    !publication.isMuted &&
+    !!publication.videoTrack
+  );
+}
+
 function isExpectedConnectAbort(error: unknown) {
   return (
     error instanceof ConnectionError &&
     error.reason === ConnectionErrorReason.Cancelled
   );
-}
-
-function hasRemoteVideoTrack(room: Room): boolean {
-  for (const participant of room.remoteParticipants.values()) {
-    for (const publication of participant.trackPublications.values()) {
-      if (
-        isVideoPublication(publication) &&
-        publication.isSubscribed &&
-        !publication.isMuted &&
-        publication.videoTrack
-      ) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 type ClassroomMediaProviderProps = {
@@ -92,14 +89,20 @@ export function ClassroomMediaProvider({
 }: ClassroomMediaProviderProps) {
   const roomRef = useRef<Room | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
-  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const remoteVideoContainersRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const remoteAudioContainerRef = useRef<HTMLDivElement>(null);
 
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [camEnabled, setCamEnabled] = useState(true);
+  const [micEnabled, setMicEnabled] = useState(
+    () => useMediaPreferencesStore.getState().micEnabled
+  );
+  const [camEnabled, setCamEnabled] = useState(
+    () => useMediaPreferencesStore.getState().camEnabled
+  );
   const [connected, setConnected] = useState(false);
-  const [hasRemoteParticipant, setHasRemoteParticipant] = useState(false);
-  const [remoteCamEnabled, setRemoteCamEnabled] = useState(false);
+  const [remoteCamEnabledByUserId, setRemoteCamEnabledByUserId] = useState<
+    Record<string, boolean>
+  >({});
+  const { microphoneEnabled } = useParticipantControls();
 
   const attachLocalVideo = useCallback((room: Room) => {
     const container = localVideoRef.current;
@@ -116,29 +119,52 @@ export function ClassroomMediaProvider({
     }
   }, []);
 
-  const clearRemoteMedia = useCallback(() => {
-    remoteVideoRef.current?.replaceChildren();
-    remoteAudioContainerRef.current?.replaceChildren();
-  }, []);
-
-  const attachRemoteVideo = useCallback((room: Room) => {
-    const container = remoteVideoRef.current;
-    if (!container) return;
+  const attachAllRemoteVideos = useCallback((room: Room) => {
+    const camState: Record<string, boolean> = {};
+    const activeRemoteUserIds = new Set<string>();
 
     for (const participant of room.remoteParticipants.values()) {
+      const userId = participant.identity;
+      activeRemoteUserIds.add(userId);
+      const container = remoteVideoContainersRef.current.get(userId);
+
+      let attached = false;
       for (const publication of participant.trackPublications.values()) {
         if (
           isVideoPublication(publication) &&
           publication.isSubscribed &&
           publication.videoTrack
         ) {
-          attachTrack(publication.videoTrack, container);
-          return;
+          if (container) {
+            attachTrack(publication.videoTrack, container);
+          }
+          camState[userId] = isRemoteVideoShowing(publication);
+          attached = true;
+          break;
         }
+      }
+
+      if (!attached) {
+        container?.replaceChildren();
+        camState[userId] = false;
       }
     }
 
-    container.replaceChildren();
+    for (const [userId, container] of remoteVideoContainersRef.current) {
+      if (!activeRemoteUserIds.has(userId)) {
+        container.replaceChildren();
+      }
+    }
+
+    setRemoteCamEnabledByUserId(camState);
+  }, []);
+
+  const clearRemoteMedia = useCallback(() => {
+    for (const container of remoteVideoContainersRef.current.values()) {
+      container.replaceChildren();
+    }
+    remoteAudioContainerRef.current?.replaceChildren();
+    setRemoteCamEnabledByUserId({});
   }, []);
 
   const attachRemoteAudio = useCallback((room: Room) => {
@@ -162,6 +188,22 @@ export function ClassroomMediaProvider({
     }
   }, []);
 
+  const registerRemoteVideoContainer = useCallback(
+    (userId: string, element: HTMLDivElement | null) => {
+      if (element) {
+        remoteVideoContainersRef.current.set(userId, element);
+      } else {
+        remoteVideoContainersRef.current.delete(userId);
+      }
+
+      const room = roomRef.current;
+      if (room) {
+        attachAllRemoteVideos(room);
+      }
+    },
+    [attachAllRemoteVideos]
+  );
+
   useEffect(() => {
     const room = new Room();
     roomRef.current = room;
@@ -169,12 +211,10 @@ export function ClassroomMediaProvider({
 
     const syncMedia = () => {
       const hasRemote = room.remoteParticipants.size > 0;
-      setHasRemoteParticipant(hasRemote);
-      setRemoteCamEnabled(hasRemote && hasRemoteVideoTrack(room));
       attachLocalVideo(room);
 
       if (hasRemote) {
-        attachRemoteVideo(room);
+        attachAllRemoteVideos(room);
         attachRemoteAudio(room);
       } else {
         clearRemoteMedia();
@@ -201,9 +241,10 @@ export function ClassroomMediaProvider({
 
     async function connect() {
       try {
+        const prefs = useMediaPreferencesStore.getState();
         await room.connect(serverUrl, token);
-        await room.localParticipant.setCameraEnabled(true);
-        await room.localParticipant.setMicrophoneEnabled(true);
+        await room.localParticipant.setCameraEnabled(prefs.camEnabled);
+        await room.localParticipant.setMicrophoneEnabled(prefs.micEnabled);
         if (!active) return;
         setMicEnabled(room.localParticipant.isMicrophoneEnabled);
         setCamEnabled(room.localParticipant.isCameraEnabled);
@@ -222,9 +263,9 @@ export function ClassroomMediaProvider({
       roomRef.current = null;
     };
   }, [
+    attachAllRemoteVideos,
     attachLocalVideo,
     attachRemoteAudio,
-    attachRemoteVideo,
     clearRemoteMedia,
     serverUrl,
     token
@@ -232,20 +273,25 @@ export function ClassroomMediaProvider({
 
   useEffect(() => {
     const room = roomRef.current;
-    if (!room || !hasRemoteParticipant) return;
+    if (!room || room.state !== ConnectionState.Connected) return;
+    // Unlock only when allowed — do not force the mic on over user prefs.
+    if (microphoneEnabled) return;
 
-    attachRemoteVideo(room);
-    attachRemoteAudio(room);
-  }, [hasRemoteParticipant, attachRemoteVideo, attachRemoteAudio]);
+    void (async () => {
+      await room.localParticipant.setMicrophoneEnabled(false);
+      setMicEnabled(false);
+    })();
+  }, [microphoneEnabled]);
 
   const toggleMic = useCallback(async () => {
     const room = roomRef.current;
     if (!room || room.state !== ConnectionState.Connected) return;
+    if (!microphoneEnabled) return;
 
     const next = !room.localParticipant.isMicrophoneEnabled;
     await room.localParticipant.setMicrophoneEnabled(next);
     setMicEnabled(next);
-  }, []);
+  }, [microphoneEnabled]);
 
   const toggleCam = useCallback(async () => {
     const room = roomRef.current;
@@ -273,27 +319,25 @@ export function ClassroomMediaProvider({
     attachLocalVideo(room);
   }, [attachLocalVideo]);
 
-  const syncRemoteVideo = useCallback(() => {
+  const syncRemoteVideos = useCallback(() => {
     const room = roomRef.current;
     if (!room) return;
-    attachRemoteVideo(room);
-    setRemoteCamEnabled(hasRemoteVideoTrack(room));
-  }, [attachRemoteVideo]);
+    attachAllRemoteVideos(room);
+  }, [attachAllRemoteVideos]);
 
   const value: ClassroomMediaContextValue = {
     localVideoRef,
-    remoteVideoRef,
     remoteAudioContainerRef,
     micEnabled,
     camEnabled,
     connected,
-    hasRemoteParticipant,
-    remoteCamEnabled,
+    remoteCamEnabledByUserId,
+    registerRemoteVideoContainer,
     toggleMic,
     toggleCam,
     endCall,
     syncLocalVideo,
-    syncRemoteVideo
+    syncRemoteVideos
   };
 
   return (
@@ -309,4 +353,21 @@ export function useClassroomMedia() {
     throw new Error("useClassroomMedia must be used within ClassroomMediaProvider");
   }
   return context;
+}
+
+export function useRemoteParticipantVideo(userId: string) {
+  const { registerRemoteVideoContainer, remoteCamEnabledByUserId } =
+    useClassroomMedia();
+
+  const videoRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      registerRemoteVideoContainer(userId, element);
+    },
+    [registerRemoteVideoContainer, userId]
+  );
+
+  return {
+    videoRef,
+    showVideo: remoteCamEnabledByUserId[userId] ?? false
+  };
 }

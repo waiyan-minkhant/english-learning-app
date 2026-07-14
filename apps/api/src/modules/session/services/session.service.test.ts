@@ -20,7 +20,11 @@ const {
   clearPresenceRoom,
   emitToRoom,
   disconnectRoom,
-  emitSocketError
+  emitSocketError,
+  initializeSessionParticipantControls,
+  clearParticipantControls,
+  ensureParticipantControlsForUser,
+  getJoinControlsSnapshot
 } = vi.hoisted(() => ({
   classFindFirst: vi.fn(),
   liveSessionUpdateMany: vi.fn(),
@@ -34,7 +38,11 @@ const {
   clearPresenceRoom: vi.fn(),
   emitToRoom: vi.fn(),
   disconnectRoom: vi.fn(),
-  emitSocketError: vi.fn()
+  emitSocketError: vi.fn(),
+  initializeSessionParticipantControls: vi.fn(),
+  clearParticipantControls: vi.fn(),
+  ensureParticipantControlsForUser: vi.fn(),
+  getJoinControlsSnapshot: vi.fn()
 }));
 
 vi.mock("../../../lib/prisma.js", () => ({
@@ -63,6 +71,13 @@ vi.mock("../../realtime/realtime.gateway.js", () => ({
   emitSocketError
 }));
 
+vi.mock("./participant-controls.service.js", () => ({
+  initializeSessionParticipantControls,
+  clearParticipantControls,
+  ensureParticipantControlsForUser,
+  getJoinControlsSnapshot
+}));
+
 import {
   autoEndSession,
   endSession,
@@ -74,6 +89,7 @@ import {
 } from "./session.service.js";
 
 const classId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const secondStudentId = "33333333-3333-4333-8333-333333333333";
 const sessionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
 describe("session.service", () => {
@@ -84,6 +100,12 @@ describe("session.service", () => {
     joinPresence.mockResolvedValue(undefined);
     leavePresence.mockResolvedValue(undefined);
     clearPresenceRoom.mockResolvedValue(undefined);
+    initializeSessionParticipantControls.mockResolvedValue(undefined);
+    clearParticipantControls.mockResolvedValue(undefined);
+    ensureParticipantControlsForUser.mockResolvedValue(undefined);
+    getJoinControlsSnapshot.mockResolvedValue({
+      participantControls: {}
+    });
     liveSessionUpdateMany.mockResolvedValue({ count: 0 });
     liveSessionUpdate.mockResolvedValue({});
     liveSessionFindFirst.mockResolvedValue({ id: sessionId });
@@ -99,7 +121,14 @@ describe("session.service", () => {
     });
 
     it("ends live sessions, creates room, and initializes presence", async () => {
-      classFindFirst.mockResolvedValue({ id: classId, teacherId: teacherUser().id });
+      classFindFirst.mockResolvedValue({
+        id: classId,
+        teacherId: teacherUser().id,
+        students: [
+          { studentId: studentUser().id },
+          { studentId: secondStudentId }
+        ]
+      });
       liveSessionCreate.mockImplementation(
         async (args: { data: { roomId: string } }) => ({
           roomId: args.data.roomId
@@ -120,6 +149,11 @@ describe("session.service", () => {
         })
       });
       expect(initializePresenceRoom).toHaveBeenCalledWith(result.roomId);
+      expect(initializeSessionParticipantControls).toHaveBeenCalledWith(
+        result.roomId,
+        teacherUser().id,
+        [studentUser().id, secondStudentId]
+      );
       expect(result.roomId).toMatch(/^class-[a-z0-9]{8}$/);
     });
   });
@@ -134,7 +168,7 @@ describe("session.service", () => {
     });
 
     it("throws when no live session exists", async () => {
-      classFindFirst.mockResolvedValue({ id: classId, studentId: studentUser().id });
+      classFindFirst.mockResolvedValue({ id: classId });
       liveSessionFindFirst.mockResolvedValue(null);
 
       await expect(joinSession(studentUser().id)).rejects.toThrow(
@@ -144,7 +178,7 @@ describe("session.service", () => {
 
     it("returns live session response", async () => {
       const startedAt = new Date("2026-01-01T12:00:00.000Z");
-      classFindFirst.mockResolvedValue({ id: classId, studentId: studentUser().id });
+      classFindFirst.mockResolvedValue({ id: classId });
       liveSessionFindFirst.mockResolvedValue({
         id: sessionId,
         roomId: TEST_ROOM_ID,
@@ -235,6 +269,7 @@ describe("session.service", () => {
 
       expect(liveSessionUpdate).toHaveBeenCalled();
       expect(clearPresenceRoom).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(clearParticipantControls).toHaveBeenCalledWith(TEST_ROOM_ID);
       expect(emitToRoom).toHaveBeenCalledWith(
         TEST_ROOM_ID,
         serverEvents.sessionEnded,
@@ -246,50 +281,69 @@ describe("session.service", () => {
 
   describe("handleJoinSession", () => {
     it("no-ops without authenticated user", async () => {
-      await handleJoinSession(mockSocket(), TEST_ROOM_ID);
+      const ack = vi.fn();
+      await handleJoinSession(mockSocket(), TEST_ROOM_ID, ack);
       expect(joinPresence).not.toHaveBeenCalled();
+      expect(ack).toHaveBeenCalledWith({ error: "UNAUTHORIZED" });
     });
 
     it("no-ops on invalid payload", async () => {
-      await handleJoinSession(mockSocket(teacherUser()), "");
+      const ack = vi.fn();
+      await handleJoinSession(mockSocket(teacherUser()), "", ack);
       expect(joinPresence).not.toHaveBeenCalled();
+      expect(ack).toHaveBeenCalledWith({ error: "INVALID_PAYLOAD" });
     });
 
     it("no-ops when presence room does not exist", async () => {
       hasPresenceRoom.mockResolvedValue(false);
+      const ack = vi.fn();
 
-      await handleJoinSession(mockSocket(teacherUser()), TEST_ROOM_ID);
+      await handleJoinSession(mockSocket(teacherUser()), TEST_ROOM_ID, ack);
 
       expect(liveSessionFindFirst).not.toHaveBeenCalled();
       expect(joinPresence).not.toHaveBeenCalled();
+      expect(ack).toHaveBeenCalledWith({ error: "SESSION_NOT_FOUND" });
     });
 
     it("self-heals and emits socket_error when session is not live in Postgres", async () => {
       liveSessionFindFirst.mockResolvedValue(null);
       const socket = mockSocket(teacherUser());
+      const ack = vi.fn();
 
-      await handleJoinSession(socket, TEST_ROOM_ID);
+      await handleJoinSession(socket, TEST_ROOM_ID, ack);
 
       expect(clearPresenceRoom).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(clearParticipantControls).toHaveBeenCalledWith(TEST_ROOM_ID);
       expect(emitSocketError).toHaveBeenCalledWith(socket, {
         request: clientEvents.joinSession,
         code: "SESSION_NOT_LIVE",
         message: "The class has already ended."
       });
       expect(joinPresence).not.toHaveBeenCalled();
+      expect(ack).toHaveBeenCalledWith({ error: "SESSION_NOT_LIVE" });
     });
 
-    it("joins presence for valid payload", async () => {
+    it("joins presence and acks controls snapshot for valid payload", async () => {
       const user = teacherUser();
       const socket = mockSocket(user);
+      const ack = vi.fn();
 
-      await handleJoinSession(socket, TEST_ROOM_ID);
+      await handleJoinSession(socket, TEST_ROOM_ID, ack);
 
       expect(liveSessionFindFirst).toHaveBeenCalledWith({
         where: { roomId: TEST_ROOM_ID, status: "live" },
         select: { id: true }
       });
       expect(joinPresence).toHaveBeenCalledWith(socket, user, TEST_ROOM_ID);
+      expect(ensureParticipantControlsForUser).toHaveBeenCalledWith(
+        TEST_ROOM_ID,
+        user
+      );
+      expect(getJoinControlsSnapshot).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(ack).toHaveBeenCalledWith({
+        roomId: TEST_ROOM_ID,
+        participantControls: {}
+      });
     });
   });
 
@@ -346,6 +400,7 @@ describe("session.service", () => {
 
       expect(liveSessionUpdate).toHaveBeenCalled();
       expect(clearPresenceRoom).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(clearParticipantControls).toHaveBeenCalledWith(TEST_ROOM_ID);
       expect(emitToRoom).toHaveBeenCalledWith(
         TEST_ROOM_ID,
         serverEvents.sessionEnded,

@@ -2,24 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button, Card, CardContent, Text } from "@/components/ui";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { MediaPrepPanel } from "@/features/media/components/MediaPrepPanel";
+import { useMediaPreferencesStore } from "@/features/media/store/mediaPreferencesStore";
 import {
   useJoinSession,
   useStartSession
 } from "@/features/session/hooks/useSession";
 import type { SessionUser } from "@/features/auth/lib/auth";
-
-const LESSON_IDS = [
-  "lesson-1",
-  "lesson-2",
-  "lesson-3",
-  "lesson-4",
-  "lesson-5",
-  "lesson-6"
-] as const;
 
 export default function DashboardPage() {
   return (
@@ -35,8 +27,11 @@ function DashboardContent({ user }: { user: SessionUser }) {
   const startSession = useStartSession();
   const joinSession = useJoinSession();
   const [error, setError] = useState<string | null>(null);
+  const permission = useMediaPreferencesStore((state) => state.permission);
 
   const actionLoading = startSession.isPending || joinSession.isPending;
+  const mediaReady = permission === "granted";
+  const actionsDisabled = actionLoading || !mediaReady;
   const isTeacher = user.role === "teacher";
 
   useEffect(() => {
@@ -99,11 +94,14 @@ function DashboardContent({ user }: { user: SessionUser }) {
               ? "Start class to open a live session. Your student can join once the session is live."
               : "Join class when your teacher has started the session."}
           </Text>
+
+          <MediaPrepPanel userName={user.name} />
+
           {isTeacher ? (
             <Button
               type="button"
               onClick={handleStartClass}
-              disabled={actionLoading}
+              disabled={actionsDisabled}
             >
               {startSession.isPending ? "Starting..." : "Start class"}
             </Button>
@@ -111,7 +109,7 @@ function DashboardContent({ user }: { user: SessionUser }) {
             <Button
               type="button"
               onClick={handleJoinClass}
-              disabled={actionLoading}
+              disabled={actionsDisabled}
             >
               {joinSession.isPending ? "Joining..." : "Join class"}
             </Button>

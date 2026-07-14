@@ -26,7 +26,7 @@ const stackSections = [
       { name: "@socket.io/redis-adapter", role: "Multi-instance socket fan-out" },
       { name: "Prisma 6", role: "ORM, migrations, seed scripts" },
       { name: "PostgreSQL 16", role: "Primary relational database" },
-      { name: "Redis 7", role: "Presence state & pub/sub adapter" },
+      { name: "Redis 7", role: "Presence, participant controls & pub/sub adapter" },
       { name: "jsonwebtoken + bcryptjs", role: "Auth tokens & password hashing" },
       { name: "livekit-server-sdk", role: "Mint WebRTC access tokens" },
       { name: "Zod 4", role: "Runtime payload validation" },
@@ -40,7 +40,7 @@ const stackSections = [
       { name: "Next.js 15", role: "App Router, SSR/CSR pages" },
       { name: "React 19", role: "UI components & hooks" },
       { name: "TanStack Query", role: "Server/async data (auth, session, video, lesson)" },
-      { name: "Zustand", role: "Client & realtime UI state (feature stores)" },
+      { name: "Zustand", role: "Client & realtime UI state (feature stores, media prefs, controls)" },
       { name: "Tailwind CSS 3", role: "Semantic tokens via design/themes" },
       { name: "socket.io-client", role: "Realtime connection to API" },
       { name: "livekit-client", role: "WebRTC room connection" },
@@ -51,7 +51,7 @@ const stackSections = [
     title: "Shared (packages/contracts)",
     description: "Single source of truth for cross-boundary types.",
     items: [
-      { name: "Zod schemas", role: "Auth, session, video, socket payloads" },
+      { name: "Zod schemas", role: "Auth (incl. name), class (studentIds), session, video, socket payloads" },
       { name: "Event constants", role: "clientEvents / serverEvents maps" },
       { name: "Workspace package", role: "Imported by API & frontend" }
     ]
@@ -63,7 +63,7 @@ const stackSections = [
       { name: "LiveKit Cloud", role: "Managed WebRTC SFU / TURN" },
       { name: "Docker Compose", role: "Local Postgres, Redis, pgAdmin" },
       { name: "PostgreSQL", role: "Users, classes, live sessions" },
-      { name: "Redis", role: "Presence hashes, socket context, adapter" }
+      { name: "Redis", role: "Presence hashes, participant controls, socket context, adapter" }
     ]
   },
   {
@@ -117,7 +117,8 @@ export default function TechStackPage() {
             <code>DATABASE_URL</code> — PostgreSQL connection string
           </li>
           <li>
-            <code>REDIS_URL</code> — Redis for presence and Socket.IO adapter
+            <code>REDIS_URL</code> — Redis for presence, participant controls,
+            and Socket.IO adapter
           </li>
           <li>
             <code>JWT_SECRET</code> — Signs application JWT cookies
