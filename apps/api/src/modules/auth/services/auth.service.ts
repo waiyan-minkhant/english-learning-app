@@ -9,7 +9,11 @@ import { ConflictError } from "../../../shared/errors/conflict-error.js";
 const JWT_EXPIRES_IN = "7d";
 export const AUTH_COOKIE_NAME = "accessToken";
 
-const userSelect = { id: true, email: true, role: true } as const;
+const userSelect = { id: true, email: true, name: true, role: true } as const;
+
+function nameFromEmail(email: string) {
+  return email.split("@")[0] ?? email;
+}
 
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
@@ -33,13 +37,19 @@ export async function register(email: string, password: string) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
-    data: { email, passwordHash, role: "student" },
+    data: {
+      email,
+      passwordHash,
+      role: "student",
+      name: nameFromEmail(email)
+    },
     select: userSelect
   });
 
   const safeUser: AuthUser = {
     id: user.id,
     email: user.email,
+    name: user.name,
     role: user.role
   };
 
@@ -60,6 +70,7 @@ export async function login(email: string, password: string) {
   const safeUser: AuthUser = {
     id: user.id,
     email: user.email,
+    name: user.name,
     role: user.role
   };
 

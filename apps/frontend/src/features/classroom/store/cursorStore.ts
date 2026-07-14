@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { isCursorActive } from "@/features/realtime/lib/cursor";
 
 export type RemoteCursor = {
   userId: string;
@@ -8,27 +9,49 @@ export type RemoteCursor = {
   targetY: number;
   label: string;
   color: string;
+  lastActiveAt: number;
+  isIdle: boolean;
+};
+
+type CursorInput = Omit<RemoteCursor, "lastActiveAt" | "isIdle"> & {
+  lastActiveAt?: number;
+  isIdle?: boolean;
 };
 
 type CursorState = {
   cursors: Record<string, RemoteCursor>;
-  upsertCursor: (cursor: RemoteCursor) => void;
+  upsertCursor: (cursor: CursorInput) => void;
   updateCursorTarget: (
     userId: string,
     target: { x: number; y: number; label?: string }
   ) => void;
   animateCursors: () => boolean;
+  tickIdleCursors: () => void;
   removeCursor: (userId: string) => void;
   pruneCursors: (userIds: Set<string>) => void;
   reset: () => void;
 };
+
+function withActivity(
+  cursor: CursorInput,
+  lastActiveAt = Date.now()
+): RemoteCursor {
+  return {
+    ...cursor,
+    lastActiveAt,
+    isIdle: false
+  };
+}
 
 export const useCursorStore = create<CursorState>((set, get) => ({
   cursors: {},
 
   upsertCursor: (cursor) =>
     set((state) => ({
-      cursors: { ...state.cursors, [cursor.userId]: cursor }
+      cursors: {
+        ...state.cursors,
+        [cursor.userId]: withActivity(cursor, cursor.lastActiveAt)
+      }
     })),
 
   updateCursorTarget: (userId, target) =>
@@ -43,7 +66,9 @@ export const useCursorStore = create<CursorState>((set, get) => ({
             ...existing,
             targetX: target.x,
             targetY: target.y,
-            label: target.label ?? existing.label
+            label: target.label ?? existing.label,
+            lastActiveAt: Date.now(),
+            isIdle: false
           }
         }
       };
@@ -74,6 +99,26 @@ export const useCursorStore = create<CursorState>((set, get) => ({
     }
 
     return dirty;
+  },
+
+  tickIdleCursors: () => {
+    const now = Date.now();
+    let dirty = false;
+    const next: Record<string, RemoteCursor> = {};
+
+    for (const [userId, cursor] of Object.entries(get().cursors)) {
+      const isIdle = !isCursorActive(cursor.lastActiveAt, now);
+      if (cursor.isIdle !== isIdle) {
+        dirty = true;
+        next[userId] = { ...cursor, isIdle };
+      } else {
+        next[userId] = cursor;
+      }
+    }
+
+    if (dirty) {
+      set({ cursors: next });
+    }
   },
 
   removeCursor: (userId) =>

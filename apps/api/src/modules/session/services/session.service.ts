@@ -21,6 +21,12 @@ import {
   emitSocketError,
   emitToRoom
 } from "../../realtime/realtime.gateway.js";
+import {
+  clearParticipantControls,
+  ensureParticipantControlsForUser,
+  getJoinControlsSnapshot,
+  initializeSessionParticipantControls
+} from "./participant-controls.service.js";
 
 function createRoomId() {
   return `class-${randomUUID().slice(0, 8)}`;
@@ -51,13 +57,15 @@ function toLiveSessionResponse(session: {
 
 async function terminateSession(sessionId: string) {
   await clearPresenceRoom(sessionId);
+  await clearParticipantControls(sessionId);
   emitToRoom(sessionId, serverEvents.sessionEnded, { sessionId });
   disconnectRoom(sessionId);
 }
 
 export async function startSession(teacherId: string) {
   const classRecord = await prisma.class.findFirst({
-    where: { teacherId }
+    where: { teacherId },
+    include: { students: true }
   });
 
   if (!classRecord) {
@@ -79,13 +87,18 @@ export async function startSession(teacherId: string) {
   });
 
   await initializePresenceRoom(session.roomId);
+  await initializeSessionParticipantControls(
+    session.roomId,
+    classRecord.teacherId,
+    classRecord.students.map((student) => student.studentId)
+  );
 
   return { roomId: session.roomId };
 }
 
 export async function joinSession(studentId: string) {
   const classRecord = await prisma.class.findFirst({
-    where: { studentId }
+    where: { students: { some: { studentId } } }
   });
 
   if (!classRecord) {
@@ -141,29 +154,51 @@ export async function isSessionLive(roomId: string): Promise<boolean> {
   return session !== null;
 }
 
-export async function handleJoinSession(socket: Socket, payload: unknown) {
+export async function handleJoinSession(
+  socket: Socket,
+  payload: unknown,
+  ack?: (response: unknown) => void
+) {
   const user = getSocketUser(socket);
-  if (!user) return;
+  if (!user) {
+    ack?.({ error: "UNAUTHORIZED" });
+    return;
+  }
 
   console.log("[session] handleJoinSession", { user });
 
   const parsed = joinSessionPayloadSchema.safeParse(payload);
-  if (!parsed.success) return;
+  if (!parsed.success) {
+    ack?.({ error: "INVALID_PAYLOAD" });
+    return;
+  }
 
   const sessionId = parsed.data;
-  if (!(await hasPresenceRoom(sessionId))) return;
+  if (!(await hasPresenceRoom(sessionId))) {
+    ack?.({ error: "SESSION_NOT_FOUND" });
+    return;
+  }
 
   if (!(await isSessionLive(sessionId))) {
     await clearPresenceRoom(sessionId);
+    await clearParticipantControls(sessionId);
     emitSocketError(socket, {
       request: clientEvents.joinSession,
       code: "SESSION_NOT_LIVE",
       message: "The class has already ended."
     });
+    ack?.({ error: "SESSION_NOT_LIVE" });
     return;
   }
 
   await joinPresence(socket, user, sessionId);
+  await ensureParticipantControlsForUser(sessionId, user);
+  const { participantControls } = await getJoinControlsSnapshot(sessionId);
+
+  ack?.({
+    roomId: sessionId,
+    participantControls
+  });
 }
 
 export async function handleLeaveSession(socket: Socket, payload: unknown) {

@@ -9,6 +9,7 @@ import {
   FiMessageSquare,
   FiMic,
   FiMicOff,
+  FiMousePointer,
   FiPhoneOff,
   FiSettings,
   FiUsers,
@@ -31,6 +32,7 @@ export const CheckIcon = createIcon(FiCheck);
 export const CloseIcon = createIcon(FiX);
 export const MicrophoneIcon = createIcon(FiMic);
 export const MicrophoneOffIcon = createIcon(FiMicOff);
+export const MousePointerIcon = createIcon(FiMousePointer);
 export const CameraIcon = createIcon(FiCamera);
 export const CameraOffIcon = createIcon(FiCameraOff);
 export const PhoneOffIcon = createIcon(FiPhoneOff);

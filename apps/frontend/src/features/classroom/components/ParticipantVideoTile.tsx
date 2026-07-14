@@ -2,14 +2,20 @@
 
 import type { RefObject } from "react";
 import { Avatar, Card, Text } from "@/components/ui";
+import { VIDEO_TILE_HEIGHT_CLASS } from "@/features/classroom/lib/videoTileLayout";
 import { cn } from "@/utils/cn";
+
+export type VideoRef =
+  | RefObject<HTMLDivElement | null>
+  | ((element: HTMLDivElement | null) => void);
 
 type ParticipantVideoTileProps = {
   role: string;
   name: string;
   fallback: string;
   showVideo: boolean;
-  videoRef?: RefObject<HTMLDivElement | null>;
+  videoRef?: VideoRef;
+  isYou?: boolean;
   className?: string;
 };
 
@@ -19,12 +25,14 @@ export function ParticipantVideoTile({
   fallback,
   showVideo,
   videoRef,
+  isYou,
   className
 }: ParticipantVideoTileProps) {
   return (
     <Card
       className={cn(
-        "relative h-[220px] shrink-0 overflow-hidden border-border bg-media",
+        "relative shrink-0 overflow-hidden border-border bg-media",
+        VIDEO_TILE_HEIGHT_CLASS,
         className
       )}
     >
@@ -48,6 +56,12 @@ export function ParticipantVideoTile({
             </Text>
             <Text variant="title" size="title-16">
               {name}
+              {isYou ? (
+                <Text variant="caption" tone="muted" as="span">
+                  {" "}
+                  (you)
+                </Text>
+              ) : null}
             </Text>
           </div>
         </div>

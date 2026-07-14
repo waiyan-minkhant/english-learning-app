@@ -45,6 +45,8 @@ export function ClassroomContainer() {
       session={classroom.session}
       onEndClass={classroom.endClass}
       onEndCall={classroom.endCall}
+      updateParticipantControls={classroom.updateParticipantControls}
+      updateBulkParticipantControls={classroom.updateBulkParticipantControls}
     />
   );
 }

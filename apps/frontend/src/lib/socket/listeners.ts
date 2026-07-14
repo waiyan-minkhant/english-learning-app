@@ -1,11 +1,15 @@
 import {
   cursorMovedPayloadSchema,
+  joinSessionSuccessPayloadSchema,
+  participantControlsUpdatedPayloadSchema,
   participantEventPayloadSchema,
   presenceUpdatedPayloadSchema,
   sessionEndedPayloadSchema,
   socketErrorPayloadSchema,
   teacherOfflinePayloadSchema,
   type CursorMovedPayload,
+  type JoinSessionSuccessPayload,
+  type ParticipantControlsUpdatedPayload,
   type ParticipantEventPayload,
   type Presence,
   type PresenceUpdatedPayload,
@@ -16,6 +20,8 @@ import {
 
 export type {
   CursorMovedPayload,
+  JoinSessionSuccessPayload,
+  ParticipantControlsUpdatedPayload,
   ParticipantEventPayload,
   Presence,
   PresenceUpdatedPayload,
@@ -52,4 +58,16 @@ export function parseSessionEndedPayload(data: unknown): SessionEndedPayload {
 
 export function parseSocketErrorPayload(data: unknown): SocketErrorPayload {
   return socketErrorPayloadSchema.parse(data);
+}
+
+export function parseJoinSessionSuccessPayload(
+  data: unknown
+): JoinSessionSuccessPayload {
+  return joinSessionSuccessPayloadSchema.parse(data);
+}
+
+export function parseParticipantControlsUpdatedPayload(
+  data: unknown
+): ParticipantControlsUpdatedPayload {
+  return participantControlsUpdatedPayloadSchema.parse(data);
 }

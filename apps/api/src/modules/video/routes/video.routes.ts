@@ -20,7 +20,7 @@ videoRouter.post(
     const { token, url } = await createVideoToken({
       roomName: parsed.data.roomName,
       participantIdentity: user.id,
-      participantName: user.email
+      participantName: user.name
     });
 
     res.json({

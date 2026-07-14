@@ -1,3 +1,13 @@
+export const CURSOR_IDLE_MS = 2000;
+
+export function isCursorActive(
+  lastActiveAt: number,
+  now = Date.now(),
+  idleMs = CURSOR_IDLE_MS
+) {
+  return now - lastActiveAt < idleMs;
+}
+
 export function normalizePointer(
   rect: DOMRect,
   clientX: number,

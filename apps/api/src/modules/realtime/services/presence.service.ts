@@ -62,6 +62,7 @@ async function getSessionPresenceList(sessionId: string): Promise<Presence[]> {
       participants.push({
         userId,
         email: entry.email,
+        name: entry.name,
         role: entry.role,
         status: entry.status
       });
@@ -134,7 +135,7 @@ export async function hasPresenceRoom(sessionId: string) {
 
 export async function registerParticipants(
   sessionId: string,
-  users: Pick<AuthUser, "id" | "email" | "role">[]
+  users: Pick<AuthUser, "id" | "email" | "name" | "role">[]
 ) {
   if (!(await presenceState.sessionRoomExists(sessionId))) return;
 
@@ -143,6 +144,7 @@ export async function registerParticipants(
     if (!existing) {
       await presenceState.setPresenceEntry(sessionId, user.id, {
         email: user.email,
+        name: user.name,
         role: user.role,
         status: "offline",
         socketIds: []
@@ -176,6 +178,7 @@ export async function joinPresence(
   if (!entry) {
     entry = {
       email: user.email,
+      name: user.name,
       role: user.role,
       status: "online",
       socketIds: []
@@ -187,6 +190,7 @@ export async function joinPresence(
     clearAutoEndTimer(sessionId);
   }
   entry.email = user.email;
+  entry.name = user.name;
   entry.role = user.role;
   entry.status = "online";
   if (!entry.socketIds.includes(socket.id)) {

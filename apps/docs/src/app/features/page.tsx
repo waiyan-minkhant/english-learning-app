@@ -10,14 +10,20 @@ const currentFeatures = [
   {
     title: "Authentication & roles",
     description:
-      "Register, login, and logout with bcrypt password hashing and JWT stored in httpOnly cookies. Users have teacher or student roles enforced on REST and socket handlers.",
+      "Register, login, and logout with bcrypt password hashing and JWT stored in httpOnly cookies. Users have a display name plus teacher or student roles enforced on REST and socket handlers.",
     tags: ["REST", "JWT", "Prisma"]
   },
   {
     title: "Class & session management",
     description:
-      "Teachers start live sessions tied to their assigned class. Students join the active live session for their class. Sessions are persisted with scheduled, live, and ended statuses.",
+      "Classes enroll many students via ClassStudent. Teachers start a live session for their class; any enrolled student can join that shared room. Sessions are persisted with scheduled, live, and ended statuses.",
     tags: ["PostgreSQL", "REST"]
+  },
+  {
+    title: "Media prep before class",
+    description:
+      "The dashboard MediaPrepPanel requests camera and mic permission, shows a local preview, and stores mute/camera preferences. Start and join stay disabled until permission is granted; preferences seed in-call media.",
+    tags: ["getUserMedia", "Zustand"]
   },
   {
     title: "Live video (LiveKit)",
@@ -28,25 +34,31 @@ const currentFeatures = [
   {
     title: "Realtime presence",
     description:
-      "Socket.IO tracks who is in a session with online, reconnecting, and offline states. Participants see a live-updating list. Disconnect timers mark users offline before removal; teacher disconnect triggers special handling.",
+      "Socket.IO tracks who is in a session with online, reconnecting, and offline states. Presence entries include display name and role. Disconnect timers mark users offline before removal; teacher disconnect triggers special handling.",
+    tags: ["Socket.IO", "Redis"]
+  },
+  {
+    title: "Participant controls",
+    description:
+      "Teachers toggle per-student (or all students) microphone and cursor permissions. State lives in Redis, is returned on join_session ack, and broadcasts as participant_controls_updated. Students start with mic on and cursor off; teachers stay privileged.",
     tags: ["Socket.IO", "Redis"]
   },
   {
     title: "Teacher offline & auto-end",
     description:
-      "When the teacher disconnects, the server emits teacher_offline and starts a countdown. If the teacher does not reconnect within the configured window, the session auto-ends — clearing presence and disconnecting all sockets.",
+      "When the teacher disconnects, the server emits teacher_offline and starts a countdown. If the teacher does not reconnect within the configured window, the session auto-ends — clearing presence, controls, and disconnecting all sockets.",
     tags: ["Timers", "Session lifecycle"]
   },
   {
     title: "Collaborative cursors",
     description:
-      "Mouse positions on the lesson canvas are normalized to [0, 1], throttled to ~20 FPS, and relayed via Socket.IO. Remote cursors interpolate smoothly on peers without persisting positions in Redis.",
+      "Mouse positions on the lesson canvas are normalized to [0, 1], throttled to ~20 FPS, and relayed via Socket.IO. The server ignores move_cursor when the sender's cursor is disabled. Remote cursors interpolate smoothly without persisting positions in Redis.",
     tags: ["Socket.IO", "Canvas"]
   },
   {
     title: "Session end (teacher)",
     description:
-      "Teachers can end a session over the socket. The server updates the database, broadcasts session_ended, clears Redis presence, and forcibly disconnects all clients in the room.",
+      "Teachers can end a session over the socket. The server updates the database, broadcasts session_ended, clears Redis presence and participant controls, and forcibly disconnects all clients in the room.",
     tags: ["Socket.IO", "Gateway"]
   },
   {
@@ -58,8 +70,8 @@ const currentFeatures = [
   {
     title: "Unit tests (API)",
     description:
-      "Vitest suites cover auth, session lifecycle, and presence logic with mocked Prisma, Redis, and gateway dependencies. No Docker services required to run tests.",
-    tags: ["Vitest", "41 tests"]
+      "Vitest suites cover auth, session lifecycle, presence, cursor gating, and participant controls with mocked Prisma, Redis, and gateway dependencies. No Docker services required to run tests.",
+    tags: ["Vitest", "50 tests"]
   }
 ];
 
@@ -73,11 +85,6 @@ const upcomingFeatures = [
     title: "Lesson content management",
     description:
       "lessonId is stored on Class records but lesson materials, slides, and structured curriculum are not yet implemented in the UI or API."
-  },
-  {
-    title: "Multi-student classrooms",
-    description:
-      "The data model is currently one teacher and one student per Class. Group classes with multiple students in a single live session are planned."
   },
   {
     title: "Persistent whiteboard",
@@ -163,17 +170,19 @@ export default function FeaturesPage() {
       <section className="prose-docs mt-14">
         <h2>Demo accounts</h2>
         <p>
-          Seeded users (password <code>password123</code> for all):
+          Seeded users (password <code>password123</code> for all). Both
+          students enroll in the same class:
         </p>
         <ul>
           <li>
-            <code>teacher@demo.local</code> — starts sessions
+            <code>teacher@demo.local</code> — Clair (teacher); starts sessions
           </li>
           <li>
-            <code>student1@demo.local</code> — joins class 1
+            <code>student1@demo.local</code> — Aung Aung; joins the live class
           </li>
           <li>
-            <code>student2@demo.local</code> — joins class 2
+            <code>student2@demo.local</code> — Kyaw Kyaw; joins the same live
+            class
           </li>
         </ul>
       </section>

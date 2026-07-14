@@ -7,8 +7,8 @@ import {
 } from "../services/session.service.js";
 
 export function registerSessionSocketHandlers(socket: Socket) {
-  socket.on(clientEvents.joinSession, (payload: unknown) => {
-    void handleJoinSession(socket, payload);
+  socket.on(clientEvents.joinSession, (payload: unknown, ack?: (response: unknown) => void) => {
+    void handleJoinSession(socket, payload, ack);
   });
 
   socket.on(clientEvents.leaveSession, (payload: unknown) => {

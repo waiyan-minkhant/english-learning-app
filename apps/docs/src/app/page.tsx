@@ -8,11 +8,11 @@ const highlights = [
   },
   {
     title: "Realtime collaboration",
-    body: "Socket.IO powers presence, session lifecycle, and shared cursors on the lesson canvas."
+    body: "Socket.IO powers presence, participant controls, session lifecycle, and shared cursors on the lesson canvas."
   },
   {
     title: "Role-based access",
-    body: "Teachers start sessions; students join live classes assigned to them. Auth uses JWT in httpOnly cookies."
+    body: "Teachers start multi-student class sessions; enrolled students join the live room. Auth uses JWT in httpOnly cookies."
   },
   {
     title: "Shared contracts",
@@ -26,7 +26,7 @@ export default function OverviewPage() {
       <PageHeader
         eyebrow="Realtime learning platform"
         title="English Learning App"
-        description="A full-stack platform for one-on-one English lessons between teachers and students — combining live video, realtime presence, and collaborative tools in a single classroom experience."
+        description="A full-stack platform for live English classes — combining multi-student video, realtime presence, teacher participant controls, and collaborative tools in a single classroom experience."
       />
 
       <section className="mb-12 grid gap-4 sm:grid-cols-2">
@@ -47,18 +47,18 @@ export default function OverviewPage() {
         <h2>What this project is</h2>
         <p>
           English Learning App is a realtime virtual classroom built for
-          structured teacher–student sessions. A teacher is assigned to one or
-          more students through <code>Class</code> records in PostgreSQL. When
-          the teacher starts a session, a unique room is created and both
-          parties enter a call page with video, a shared lesson canvas, and a
-          live participant list.
+          structured teacher–student sessions. A teacher is assigned to many
+          students through <code>Class</code> and <code>ClassStudent</code>{" "}
+          records in PostgreSQL. When the teacher starts a session, a unique
+          room is created and the class enters a call page with video, a shared
+          lesson canvas, and a participant controls panel.
         </p>
         <p>
           The backend owns session state, authentication, presence tracking,
-          and LiveKit token issuance. The frontend consumes REST for
-          session setup and Socket.IO for everything that must update in
-          realtime. Media (audio/video) flows directly between browsers and
-          LiveKit Cloud — the API never proxies WebRTC traffic.
+          participant controls, and LiveKit token issuance. The frontend
+          consumes REST for session setup and Socket.IO for everything that
+          must update in realtime. Media (audio/video) flows directly between
+          browsers and LiveKit Cloud — the API never proxies WebRTC traffic.
         </p>
 
         <h2>Project scope</h2>
@@ -69,8 +69,9 @@ export default function OverviewPage() {
             Prisma ORM, and Redis-backed realtime state
           </li>
           <li>
-            <strong>Frontend</strong> — Next.js 15 app for login, dashboard, and
-            the live call room (video + canvas + presence panel)
+            <strong>Frontend</strong> — Next.js 15 app for login, dashboard
+            (media prep), and the live call room (video + canvas + participant
+            controls)
           </li>
           <li>
             <strong>Docs</strong> — This documentation site
@@ -89,13 +90,14 @@ export default function OverviewPage() {
         <h2>Who it is for</h2>
         <ul>
           <li>
-            <strong>Teachers</strong> — start a live class, share video, see who
-            is online, end the session, and recover gracefully when connectivity
-            drops
+            <strong>Teachers</strong> — start a live class, share video, mute or
+            disable student cursors, see who is online, end the session, and
+            recover gracefully when connectivity drops
           </li>
           <li>
-            <strong>Students</strong> — join the teacher&apos;s active session,
-            participate in video, and collaborate on the lesson canvas
+            <strong>Students</strong> — prepare camera/mic on the dashboard,
+            join the teacher&apos;s active session, participate in video, and
+            collaborate on the lesson canvas when allowed
           </li>
         </ul>
       </section>

@@ -8,6 +8,7 @@ import { useVideoToken } from "@/features/classroom/hooks/useVideoToken";
 import { useCursor } from "@/features/realtime/hooks/useCursor";
 import { usePresence } from "@/features/realtime/hooks/usePresence";
 import { useRealtimeConnection } from "@/features/realtime/hooks/useRealtimeConnection";
+import { useParticipantControlsSync } from "@/features/realtime/hooks/useParticipantControlsSync";
 import { useTeacherStatus } from "@/features/realtime/hooks/useTeacherStatus";
 
 export function useClassroom(roomId: string) {
@@ -17,6 +18,10 @@ export function useClassroom(roomId: string) {
   const connection = useRealtimeConnection(roomId);
 
   usePresence(roomId, connection.socketRef);
+  const participantControls = useParticipantControlsSync(
+    roomId,
+    connection.socketRef
+  );
 
   const handleSessionEnded = useCallback(() => {
     connection.manualLeaveRef.current = true;
@@ -59,6 +64,9 @@ export function useClassroom(roomId: string) {
     loading,
     error,
     endClass: teacherStatus.endClass,
-    endCall: handleEndCall
+    endCall: handleEndCall,
+    updateParticipantControls: participantControls.updateParticipantControls,
+    updateBulkParticipantControls:
+      participantControls.updateBulkParticipantControls
   };
 }

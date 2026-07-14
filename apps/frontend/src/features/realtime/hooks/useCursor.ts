@@ -57,7 +57,7 @@ export function useCursor({
         if (parsed.userId === currentUserId) return;
 
         const participant = participantById.get(parsed.userId);
-        const label = participant?.email ?? "Guest";
+        const label = participant?.name ?? "Guest";
         const existing = useCursorStore.getState().cursors[parsed.userId];
 
         if (!existing) {

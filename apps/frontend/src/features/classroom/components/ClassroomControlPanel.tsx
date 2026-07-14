@@ -56,6 +56,7 @@ type ClassroomControlPanelProps = {
   camEnabled: boolean;
   micEnabled: boolean;
   connected: boolean;
+  micAllowed?: boolean;
   toggleCam: () => Promise<void>;
   toggleMic: () => Promise<void>;
 };
@@ -64,6 +65,7 @@ export function ClassroomControlPanel({
   camEnabled,
   micEnabled,
   connected,
+  micAllowed = true,
   toggleCam,
   toggleMic
 }: ClassroomControlPanelProps) {
@@ -86,9 +88,9 @@ export function ClassroomControlPanel({
 
         <ControlPanelCell
           label="Mic"
-          tone={micEnabled ? "primary" : "muted"}
-          disabled={!connected}
-          interactive
+          tone={micEnabled && micAllowed ? "primary" : "muted"}
+          disabled={!connected || !micAllowed}
+          interactive={micAllowed}
           onClick={() => void toggleMic()}
         >
           {micEnabled ? (

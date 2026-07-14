@@ -41,6 +41,7 @@ describe("auth.service", () => {
       create.mockResolvedValue({
         id: teacherId,
         email: "new@example.com",
+        name: "new",
         role: "student"
       });
 
@@ -49,6 +50,7 @@ describe("auth.service", () => {
       expect(result.user).toEqual({
         id: teacherId,
         email: "new@example.com",
+        name: "new",
         role: "student"
       });
       expect(verifyToken(result.token)).toEqual(result.user);
@@ -69,6 +71,7 @@ describe("auth.service", () => {
       findUnique.mockResolvedValue({
         id: teacherId,
         email: "user@example.com",
+        name: "user",
         passwordHash,
         role: "teacher"
       });
@@ -83,6 +86,7 @@ describe("auth.service", () => {
       findUnique.mockResolvedValue({
         id: teacherId,
         email: "user@example.com",
+        name: "user",
         passwordHash,
         role: "teacher"
       });
@@ -92,6 +96,7 @@ describe("auth.service", () => {
       expect(result.user).toEqual({
         id: teacherId,
         email: "user@example.com",
+        name: "user",
         role: "teacher"
       });
       expect(verifyToken(result.token)).toEqual(result.user);
@@ -116,7 +121,7 @@ describe("auth.service", () => {
 
     it("throws when JWT_SECRET is missing", () => {
       const token = jwt.sign(
-        { id: teacherId, email: "a@b.com", role: "student" },
+        { id: teacherId, email: "a@b.com", name: "a", role: "student" },
         "test-secret",
         { expiresIn: "1h" }
       );

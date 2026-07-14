@@ -11,13 +11,19 @@ const frontendModules = [
     name: "Auth",
     path: "features/auth/",
     responsibility:
-      "Login, register, logout via useAuth. authStore persists the session user; RequireAuth and RedirectIfAuthenticated guard routes. Syncs TanStack Query auth/me into Zustand."
+      "Login, register, logout via useAuth. authStore persists the session user (including display name); RequireAuth and RedirectIfAuthenticated guard routes. Syncs TanStack Query auth/me into Zustand."
   },
   {
     name: "Session",
     path: "features/session/",
     responsibility:
       "useStartSession and useJoinSession mutations call sessionService, then navigate to /call/[roomId]. Thin hooks over REST — no local session store."
+  },
+  {
+    name: "Media",
+    path: "features/media/",
+    responsibility:
+      "MediaPrepPanel on the dashboard requests camera/mic permission, shows a preview, and stores local mute/camera prefs in mediaPreferencesStore. Start/join stay gated until permission is granted."
   },
   {
     name: "Lesson",
@@ -29,13 +35,13 @@ const frontendModules = [
     name: "Classroom",
     path: "features/classroom/",
     responsibility:
-      "Live call shell: ClassroomContainer, VideoGrid (LiveKit), StudentList, CursorOverlay, Toolbar. classroomStore, presenceStore, and cursorStore hold realtime UI state."
+      "Live call shell: ClassroomContainer, VideoGrid (LiveKit), ParticipantControlsPopover/Panel, CursorOverlay, Toolbar. Stores: classroomStore, presenceStore, cursorStore, participantControlsStore. ClassroomMediaContext applies prefs + teacher mic locks."
   },
   {
     name: "Realtime",
     path: "features/realtime/",
     responsibility:
-      "useRealtimeConnection opens the socket and emits join_session. usePresence, useCursor, and useTeacherStatus wire server events into classroom stores via lib/socket/."
+      "useRealtimeConnection opens the socket and emitJoinSessionWithAck, then hydrates participant controls. usePresence, useCursor, useParticipantControlsSync, and useTeacherStatus wire server events into classroom stores via lib/socket/."
   },
   {
     name: "UI / Settings",
@@ -75,8 +81,8 @@ export function FrontendPanel() {
             items={[
               "Query: auth, session, video, lesson",
               "Zustand: auth, lesson, classroom",
-              "Zustand: ui, settings (persisted)",
-              "No server state in Zustand"
+              "Zustand: presence, cursor, controls, media",
+              "Zustand: ui, settings (persisted)"
             ]}
           />
           <ArchBox
@@ -86,7 +92,7 @@ export function FrontendPanel() {
               "lib/socket/ + contracts",
               "Typed emit + Zod listeners",
               "LiveKit client in VideoGrid",
-              "Cursor overlay on lesson canvas"
+              "Media prep + cursor overlay"
             ]}
           />
         </div>
@@ -119,7 +125,7 @@ export function FrontendPanel() {
         <h3>Folder structure</h3>
         <CodeBlock title="apps/frontend/src/">
 {`app/              App Router pages + root layout
-features/         Domain modules (auth, session, lesson, classroom, …)
+features/         Domain modules (auth, session, media, lesson, classroom, …)
   */hooks/        Business orchestration
   */store/        Zustand client/realtime state
   */components/   Feature-specific UI
@@ -147,7 +153,8 @@ services/         authService, sessionService, videoService, lessonService`}
             redirect to dashboard on success
           </li>
           <li>
-            <strong>/dashboard</strong> — start/join class, lesson links, logout
+            <strong>/dashboard</strong> — media prep (permission + preview),
+            start/join class (gated on permission), lesson links, logout
           </li>
           <li>
             <strong>/lesson/[lessonId]</strong> — solo lesson with sidebar,
@@ -155,7 +162,7 @@ services/         authService, sessionService, videoService, lessonService`}
           </li>
           <li>
             <strong>/call/[roomId]</strong> — live classroom: embedded lesson,
-            video panel, presence list, collaborative cursors
+            video panel, participant controls, collaborative cursors
           </li>
         </ul>
       </section>
@@ -210,6 +217,11 @@ services/         authService, sessionService, videoService, lessonService`}
           title="Classroom entry"
           steps={[
             {
+              label: "Dashboard media prep",
+              detail:
+                "MediaPrepPanel grants camera/mic; prefs stored in mediaPreferencesStore"
+            },
+            {
               label: "Dashboard action",
               detail:
                 "Teacher: useStartSession → POST /sessions/start. Student: useJoinSession → POST /sessions/join"
@@ -221,17 +233,17 @@ services/         authService, sessionService, videoService, lessonService`}
             {
               label: "useRealtimeConnection",
               detail:
-                "createSocket() → emit join_session on connect; expose socketRef"
+                "createSocket() → emitJoinSessionWithAck → hydrate participantControlsStore"
             },
             {
               label: "Parallel setup",
               detail:
-                "useVideoToken → videoService. usePresence / useCursor / useTeacherStatus subscribe via lib/socket/listeners"
+                "useVideoToken, usePresence, useCursor, useParticipantControlsSync, useTeacherStatus"
             },
             {
               label: "ClassroomView renders",
               detail:
-                "Embedded LessonContainer (mode=classroom), VideoGrid, StudentList, CursorOverlay"
+                "LessonContainer, VideoGrid, ParticipantControlsPopover, CursorOverlay; ClassroomMediaProvider applies prefs + mic locks"
             }
           ]}
         />
@@ -277,8 +289,10 @@ services/         authService, sessionService, videoService, lessonService`}
         <CodeBlock title="lib/socket/ layout">
 {`socket.ts     createSocket(), disconnectSocket() — withCredentials to API
 events.ts     Re-exports clientEvents / serverEvents from contracts
-emit.ts       joinSession, leaveSession, endSession, moveCursor
-listeners.ts  parsePresenceUpdated, parseCursorMoved, … (Zod safeParse)`}
+emit.ts       joinSession, emitJoinSessionWithAck, leaveSession, endSession,
+              moveCursor, updateParticipantControls, updateBulkParticipantControls
+listeners.ts  parsePresenceUpdated, parseCursorMoved,
+              parseParticipantControlsUpdatedPayload, … (Zod safeParse)`}
         </CodeBlock>
       </section>
     </div>

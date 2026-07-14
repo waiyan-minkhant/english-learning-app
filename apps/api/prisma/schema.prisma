@@ -19,28 +19,40 @@ enum LiveSessionStatus {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  passwordHash   String
-  role           UserRole @default(student)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  teacherClasses Class[]  @relation("TeacherClasses")
-  studentClasses Class[]  @relation("StudentClasses")
+  id               String         @id @default(uuid())
+  email            String         @unique
+  name             String
+  passwordHash     String
+  role             UserRole       @default(student)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  teacherClasses   Class[]        @relation("TeacherClasses")
+  classMemberships ClassStudent[]
 }
 
 model Class {
-  id        String        @id @default(uuid())
+  id        String         @id @default(uuid())
   teacherId String
-  studentId String
   lessonId  String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  teacher   User          @relation("TeacherClasses", fields: [teacherId], references: [id])
-  student   User          @relation("StudentClasses", fields: [studentId], references: [id])
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  teacher   User           @relation("TeacherClasses", fields: [teacherId], references: [id])
+  students  ClassStudent[]
   sessions  LiveSession[]
 
   @@map("Class")
+}
+
+model ClassStudent {
+  id        String   @id @default(uuid())
+  classId   String
+  studentId String
+  createdAt DateTime @default(now())
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+  @@map("ClassStudent")
 }
 
 model LiveSession {
