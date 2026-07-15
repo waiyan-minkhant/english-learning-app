@@ -12,7 +12,6 @@ import {
 import {
   controlPanelCellVariants,
   controlPanelCircleVariants,
-  controlPanelLabelVariants,
   controlPanelShellVariants
 } from "@/features/classroom/components/controlPanelVariants";
 import { cn } from "@/utils/cn";
@@ -42,12 +41,12 @@ function ControlPanelCell({
       type="button"
       disabled={disabled}
       onClick={onClick}
+      aria-label={label}
       className={controlPanelCellVariants({ interactive })}
     >
       <span className={controlPanelCircleVariants({ tone })}>
         <span className={cn("inline-flex", iconClassName)}>{children}</span>
       </span>
-      <span className={controlPanelLabelVariants()}>{label}</span>
     </button>
   );
 }
@@ -59,6 +58,8 @@ type ClassroomControlPanelProps = {
   micAllowed?: boolean;
   toggleCam: () => Promise<void>;
   toggleMic: () => Promise<void>;
+  className?: string;
+  id?: string;
 };
 
 export function ClassroomControlPanel({
@@ -67,10 +68,13 @@ export function ClassroomControlPanel({
   connected,
   micAllowed = true,
   toggleCam,
-  toggleMic
+  toggleMic,
+  className,
+  id
 }: ClassroomControlPanelProps) {
+  console.log("micEnabled", micEnabled);
   return (
-    <div className={controlPanelShellVariants()}>
+    <div id={id} className={cn(controlPanelShellVariants(), className)}>
       <div className="grid grid-cols-2 divide-x divide-y divide-border">
         <ControlPanelCell
           label="Camera"

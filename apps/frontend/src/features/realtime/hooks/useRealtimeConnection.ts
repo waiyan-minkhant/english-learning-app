@@ -7,6 +7,7 @@ import { useCursorStore } from "@/features/classroom/store/cursorStore";
 import { useParticipantControlsStore } from "@/features/classroom/store/participantControlsStore";
 import { usePresenceStore } from "@/features/classroom/store/presenceStore";
 import { hydrateParticipantControls } from "@/features/realtime/hooks/useParticipantControlsSync";
+import { useMediaPreferencesStore } from "@/features/media/store/mediaPreferencesStore";
 import { emitJoinSessionWithAck, emitLeaveSession } from "@/lib/socket/emit";
 import { createSocket, disconnectSocket } from "@/lib/socket/socket";
 
@@ -51,7 +52,12 @@ export function useRealtimeConnection(roomId: string) {
     socketRef.current = socket;
 
     const onConnect = () => {
-      void emitJoinSessionWithAck(socket, roomId).then((snapshot) => {
+      const microphoneEnabled =
+        useMediaPreferencesStore.getState().micEnabled;
+      void emitJoinSessionWithAck(socket, {
+        sessionId: roomId,
+        microphoneEnabled
+      }).then((snapshot) => {
         if (!snapshot) return;
         hydrateParticipantControls(snapshot.participantControls);
       });

@@ -8,7 +8,7 @@ export const TEACHER_PARTICIPANT_CONTROLS: ParticipantControls = {
 };
 
 export const STUDENT_PARTICIPANT_CONTROLS: ParticipantControls = {
-  microphoneEnabled: true,
+  microphoneEnabled: false,
   cursorEnabled: false
 };
 
@@ -112,7 +112,8 @@ export async function updateBulkStudentControls(
 export async function ensureParticipantControls(
   sessionId: string,
   userId: string,
-  role: "teacher" | "student"
+  role: "teacher" | "student",
+  initial?: Partial<ParticipantControls>
 ) {
   const existing = await getParticipantControls(sessionId, userId);
   if (existing) return existing;
@@ -121,8 +122,10 @@ export async function ensureParticipantControls(
     role === "teacher"
       ? TEACHER_PARTICIPANT_CONTROLS
       : STUDENT_PARTICIPANT_CONTROLS;
-  await setParticipantControls(sessionId, userId, defaults);
-  return defaults;
+  const next =
+    role === "teacher" ? defaults : { ...defaults, ...initial };
+  await setParticipantControls(sessionId, userId, next);
+  return next;
 }
 
 export async function clearParticipantControls(sessionId: string) {

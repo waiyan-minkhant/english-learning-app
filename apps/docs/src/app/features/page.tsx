@@ -40,7 +40,7 @@ const currentFeatures = [
   {
     title: "Participant controls",
     description:
-      "Teachers toggle per-student (or all students) microphone and cursor permissions. State lives in Redis, is returned on join_session ack, and broadcasts as participant_controls_updated. Students start with mic on and cursor off; teachers stay privileged.",
+      "Teachers toggle per-student (or all students) microphone and cursor permissions. State lives in Redis, is returned on join_session ack, and broadcasts as participant_controls_updated. On first join, student mic may seed from the dashboard preference (default off); teachers stay privileged.",
     tags: ["Socket.IO", "Redis"]
   },
   {

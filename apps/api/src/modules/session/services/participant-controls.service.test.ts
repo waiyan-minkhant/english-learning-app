@@ -38,7 +38,7 @@ vi.mock("../state/participant-controls.state.js", () => ({
     cursorEnabled: true
   },
   STUDENT_PARTICIPANT_CONTROLS: {
-    microphoneEnabled: true,
+    microphoneEnabled: false,
     cursorEnabled: false
   },
   initializeParticipantControls: (
@@ -74,21 +74,41 @@ vi.mock("../state/participant-controls.state.js", () => ({
   ensureParticipantControls: (
     sessionId: string,
     userId: string,
-    role: "teacher" | "student"
-  ) => controlsTestStore.ensureParticipantControls(sessionId, userId, role),
+    role: "teacher" | "student",
+    initial?: Partial<{ microphoneEnabled: boolean; cursorEnabled: boolean }>
+  ) =>
+    controlsTestStore.ensureParticipantControls(
+      sessionId,
+      userId,
+      role,
+      initial
+    ),
   clearParticipantControls: (sessionId: string) =>
     controlsTestStore.clearParticipantControls(sessionId)
 }));
 
 import {
+  broadcastParticipantControls,
   canUseCursor,
+  ensureParticipantControlsForUser,
   getJoinControlsSnapshot,
-  initializeSessionParticipantControls,
   updateBulkParticipantControls,
   updateParticipantControls
 } from "./participant-controls.service.js";
 
 const BOB_ID = "33333333-3333-4333-8333-333333333333";
+
+async function seedJoinedParticipants(
+  studentIds: string[] = [studentUser().id]
+) {
+  await ensureParticipantControlsForUser(TEST_ROOM_ID, teacherUser());
+  for (const studentId of studentIds) {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, {
+      ...studentUser(),
+      id: studentId
+    });
+  }
+}
 
 describe("participant-controls.service", () => {
   beforeEach(() => {
@@ -98,11 +118,22 @@ describe("participant-controls.service", () => {
     liveSessionFindFirst.mockResolvedValue({ id: "session-id" });
   });
 
-  it("seeds teacher true/true and students mic true / cursor false on initialize", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
-      studentUser().id,
-      BOB_ID
+  it("ensure creates a single entry with role defaults", async () => {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, studentUser());
+
+    const snapshot = await getJoinControlsSnapshot(TEST_ROOM_ID);
+
+    expect(Object.keys(snapshot.participantControls)).toEqual([
+      studentUser().id
     ]);
+    expect(snapshot.participantControls[studentUser().id]).toEqual({
+      microphoneEnabled: false,
+      cursorEnabled: false
+    });
+  });
+
+  it("ensure seeds teacher true/true and students mic false / cursor false on join", async () => {
+    await seedJoinedParticipants([studentUser().id, BOB_ID]);
 
     const snapshot = await getJoinControlsSnapshot(TEST_ROOM_ID);
 
@@ -111,20 +142,61 @@ describe("participant-controls.service", () => {
       cursorEnabled: true
     });
     expect(snapshot.participantControls[studentUser().id]).toEqual({
-      microphoneEnabled: true,
+      microphoneEnabled: false,
       cursorEnabled: false
     });
     expect(snapshot.participantControls[BOB_ID]).toEqual({
+      microphoneEnabled: false,
+      cursorEnabled: false
+    });
+  });
+
+  it("ensure seeds student microphoneEnabled from join preference", async () => {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, studentUser(), {
+      microphoneEnabled: true
+    });
+
+    const snapshot = await getJoinControlsSnapshot(TEST_ROOM_ID);
+    expect(snapshot.participantControls[studentUser().id]).toEqual({
       microphoneEnabled: true,
       cursorEnabled: false
     });
   });
 
-  it("bulk mute all sets every student microphoneEnabled to false", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
+  it("ensure does not overwrite existing controls with join preference", async () => {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, studentUser(), {
+      microphoneEnabled: true
+    });
+    await controlsTestStore.setParticipantControls(
+      TEST_ROOM_ID,
       studentUser().id,
-      BOB_ID
-    ]);
+      { microphoneEnabled: false, cursorEnabled: false }
+    );
+
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, studentUser(), {
+      microphoneEnabled: true
+    });
+
+    const snapshot = await getJoinControlsSnapshot(TEST_ROOM_ID);
+    expect(
+      snapshot.participantControls[studentUser().id]?.microphoneEnabled
+    ).toBe(false);
+  });
+
+  it("ensure ignores microphone preference for teachers", async () => {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, teacherUser(), {
+      microphoneEnabled: false
+    });
+
+    const snapshot = await getJoinControlsSnapshot(TEST_ROOM_ID);
+    expect(snapshot.participantControls[teacherUser().id]).toEqual({
+      microphoneEnabled: true,
+      cursorEnabled: true
+    });
+  });
+
+  it("bulk mute all sets every student microphoneEnabled to false", async () => {
+    await seedJoinedParticipants([studentUser().id, BOB_ID]);
 
     await controlsTestStore.setParticipantControls(TEST_ROOM_ID, BOB_ID, {
       microphoneEnabled: true,
@@ -149,10 +221,16 @@ describe("participant-controls.service", () => {
   });
 
   it("single update mute only changes one student", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
+    await seedJoinedParticipants([studentUser().id, BOB_ID]);
+    await controlsTestStore.setParticipantControls(TEST_ROOM_ID, BOB_ID, {
+      microphoneEnabled: true,
+      cursorEnabled: false
+    });
+    await controlsTestStore.setParticipantControls(
+      TEST_ROOM_ID,
       studentUser().id,
-      BOB_ID
-    ]);
+      { microphoneEnabled: true, cursorEnabled: false }
+    );
 
     const socket = mockSocket(teacherUser());
     await updateParticipantControls(socket, {
@@ -172,9 +250,7 @@ describe("participant-controls.service", () => {
   });
 
   it("broadcasts full map on update", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
-      studentUser().id
-    ]);
+    await seedJoinedParticipants([studentUser().id]);
 
     const socket = mockSocket(teacherUser());
     await updateParticipantControls(socket, {
@@ -190,7 +266,7 @@ describe("participant-controls.service", () => {
         sessionId: TEST_ROOM_ID,
         participantControls: expect.objectContaining({
           [studentUser().id]: {
-            microphoneEnabled: true,
+            microphoneEnabled: false,
             cursorEnabled: true
           }
         })
@@ -198,10 +274,28 @@ describe("participant-controls.service", () => {
     );
   });
 
+  it("broadcastParticipantControls emits current map", async () => {
+    await ensureParticipantControlsForUser(TEST_ROOM_ID, teacherUser());
+
+    await broadcastParticipantControls(TEST_ROOM_ID);
+
+    expect(emitToRoom).toHaveBeenCalledWith(
+      TEST_ROOM_ID,
+      serverEvents.participantControlsUpdated,
+      {
+        sessionId: TEST_ROOM_ID,
+        participantControls: {
+          [teacherUser().id]: {
+            microphoneEnabled: true,
+            cursorEnabled: true
+          }
+        }
+      }
+    );
+  });
+
   it("canUseCursor returns true for teachers regardless of stored controls", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
-      studentUser().id
-    ]);
+    await seedJoinedParticipants([studentUser().id]);
 
     await controlsTestStore.setParticipantControls(
       TEST_ROOM_ID,
@@ -216,9 +310,7 @@ describe("participant-controls.service", () => {
   });
 
   it("canUseCursor reads student entry directly", async () => {
-    await initializeSessionParticipantControls(TEST_ROOM_ID, teacherUser().id, [
-      studentUser().id
-    ]);
+    await seedJoinedParticipants([studentUser().id]);
 
     await expect(canUseCursor(TEST_ROOM_ID, studentUser())).resolves.toBe(false);
 

@@ -2,7 +2,10 @@ import { z } from "zod";
 import { userRoleSchema } from "@english-learning/contracts";
 import { roomIdSchema } from "@english-learning/contracts/realtime";
 
-export const joinSessionPayloadSchema = roomIdSchema;
+export const joinSessionPayloadSchema = z.object({
+  sessionId: roomIdSchema,
+  microphoneEnabled: z.boolean().optional()
+});
 
 export const endSessionPayloadSchema = roomIdSchema;
 

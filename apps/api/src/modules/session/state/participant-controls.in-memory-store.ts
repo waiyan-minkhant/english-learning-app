@@ -83,7 +83,8 @@ export class InMemoryParticipantControlsStore {
   async ensureParticipantControls(
     sessionId: string,
     userId: string,
-    role: "teacher" | "student"
+    role: "teacher" | "student",
+    initial?: Partial<ParticipantControls>
   ) {
     const existing = await this.getParticipantControls(sessionId, userId);
     if (existing) return existing;
@@ -92,8 +93,10 @@ export class InMemoryParticipantControlsStore {
       role === "teacher"
         ? TEACHER_PARTICIPANT_CONTROLS
         : STUDENT_PARTICIPANT_CONTROLS;
-    await this.setParticipantControls(sessionId, userId, defaults);
-    return defaults;
+    const next =
+      role === "teacher" ? defaults : { ...defaults, ...initial };
+    await this.setParticipantControls(sessionId, userId, next);
+    return next;
   }
 
   async clearParticipantControls(sessionId: string) {

@@ -1,10 +1,10 @@
-export const VIDEO_TILE_HEIGHT_PX = 220;
+export const VIDEO_TILE_HEIGHT_PX = 160;
 export const VIDEO_TILE_GAP_PX = 16;
 
 export const VIDEO_TILE_SCROLL_MAX_HEIGHT_PX =
   VIDEO_TILE_HEIGHT_PX * 2 + VIDEO_TILE_GAP_PX;
 
-export const VIDEO_TILE_HEIGHT_CLASS = "h-[220px]";
+export const VIDEO_TILE_HEIGHT_CLASS = "h-[160px]";
 
 export function getVideoScrollViewportHeightPx(
   totalTileCount: number

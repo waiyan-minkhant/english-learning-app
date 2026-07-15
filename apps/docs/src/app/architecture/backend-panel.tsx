@@ -23,7 +23,7 @@ const apiModules = [
     name: "Session / Participant controls",
     path: "modules/session/services/participant-controls.service.ts",
     responsibility:
-      "Redis map of per-user microphoneEnabled / cursorEnabled. Init on session start, ensure on join, teacher-only single and bulk updates, clear on end. canUseCursor / canUseMicrophone gate cursor relay and client media."
+      "Redis map of per-user microphoneEnabled / cursorEnabled. Created on socket join via ensure (student mic may seed from dashboard preference); teacher-only single and bulk updates; clear on end. canUseCursor / canUseMicrophone gate cursor relay and client media."
   },
   {
     name: "Realtime / Presence",
@@ -146,7 +146,7 @@ Response / socket event (also schema-checked where applicable)`}
             {
               label: "POST /sessions/start",
               detail:
-                "requireRole(teacher) — finds teacher's Class and enrolled students"
+                "requireRole(teacher) — finds teacher's Class"
             },
             {
               label: "Create LiveSession",
@@ -157,14 +157,9 @@ Response / socket event (also schema-checked where applicable)`}
               detail: "Sets Redis room marker session:{sessionId} with TTL"
             },
             {
-              label: "initializeSessionParticipantControls",
+              label: "Return { roomId }",
               detail:
-                "Teacher: mic + cursor on; each student: mic on, cursor off"
-            },
-            {
-              label: "Return { roomId } → socket join_session",
-              detail:
-                "Frontend navigates to /call/{roomId}; join ack returns participantControls map"
+                "Frontend navigates to /call/{roomId}; controls created later on socket join"
             }
           ]}
         />
@@ -186,7 +181,7 @@ Response / socket event (also schema-checked where applicable)`}
             {
               label: "Socket join_session (acked)",
               detail:
-                "Presence join + ensureParticipantControlsForUser; ack { roomId, participantControls }"
+                "Presence join + ensureParticipantControlsForUser (optional student mic pref on first create) + broadcast; ack { roomId, participantControls }"
             },
             {
               label: "POST /video/token",
@@ -206,7 +201,7 @@ Response / socket event (also schema-checked where applicable)`}
         </p>
         <div className="not-prose grid gap-4 sm:grid-cols-2">
           <CodeBlock title="Client → server">
-{`join_session                      sessionId (acked)
+{`join_session                      { sessionId, microphoneEnabled? } (acked)
 leave_session                     sessionId
 end_session                       sessionId (teacher only)
 move_cursor                       { sessionId, x, y }

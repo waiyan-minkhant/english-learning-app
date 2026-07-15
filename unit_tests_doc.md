@@ -175,10 +175,10 @@ HTTP-level auth (`getAuthUser`, `requireRole` in `apps/api/src/lib/require-auth.
 
 | Area | Behavior verified |
 |------|-------------------|
-| `startSession` | No class → error; ends other `live` sessions; creates `class-{8}` room id; calls `initializePresenceRoom` + `initializeSessionParticipantControls` |
+| `startSession` | No class → error; ends other `live` sessions; creates `class-{8}` room id; calls `initializePresenceRoom` |
 | `joinSession` | No class / no live session errors; returns normalized session DTO |
 | `endSession` | Wrong or missing session → `"Cannot end this session"`; updates DB to `ended` |
-| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; Redis room exists but Postgres not live → `clearPresenceRoom` + `emitSocketError` (`SESSION_NOT_LIVE`); valid → `isSessionLive` + `joinPresence` + controls snapshot ack |
+| `handleJoinSession` | Unauthenticated, invalid payload, or missing presence room → no-op; Redis room exists but Postgres not live → `clearPresenceRoom` + `emitSocketError` (`SESSION_NOT_LIVE`); valid → `isSessionLive` + `joinPresence` + `ensureParticipantControlsForUser` + controls broadcast + ack snapshot |
 | `handleLeaveSession` | Same guards; valid → `leavePresence` |
 | `handleEndSession` | Students blocked; missing room or failed `endSession` → no terminate; teacher success → DB end + clear presence/controls + `session_ended` emit + `disconnectRoom` |
 
@@ -235,7 +235,7 @@ Use `vi.hoisted()` for mock function references so Vitest’s hoisted `vi.mock` 
 ### Session → presence + controls + gateway
 
 - `presence.service` exports: `initializePresenceRoom`, `hasPresenceRoom`, `joinPresence`, `leavePresence`, `clearPresenceRoom`
-- `participant-controls.service` exports: `initializeSessionParticipantControls`, join snapshot helpers, clear on terminate
+- `participant-controls.service` exports: `ensureParticipantControlsForUser`, join snapshot helpers, broadcast, clear on terminate
 - `realtime.gateway` exports: `emitToRoom`, `disconnectRoom`, `emitSocketError`
 
 ### Presence → state + gateway

@@ -6,7 +6,7 @@ import { useParticipantControlsStore } from "@/features/classroom/store/particip
 import type { ParticipantControls } from "@english-learning/contracts/socket/schema";
 
 const DEFAULT_STUDENT_CONTROLS: ParticipantControls = {
-  microphoneEnabled: true,
+  microphoneEnabled: false,
   cursorEnabled: false
 };
 

@@ -1,4 +1,5 @@
 import type {
+  JoinSessionPayload,
   UpdateBulkParticipantControlsPayload,
   UpdateParticipantControlsPayload
 } from "@english-learning/contracts/socket/schema";
@@ -15,12 +16,12 @@ type JoinSessionAckResponse =
 
 export function emitJoinSessionWithAck(
   socket: Socket,
-  sessionId: string
+  payload: JoinSessionPayload
 ): Promise<JoinSessionSuccessPayload | null> {
   return new Promise((resolve) => {
     socket.emit(
       clientEvents.joinSession,
-      sessionId,
+      payload,
       (response: JoinSessionAckResponse) => {
         if (!response || "error" in response) {
           resolve(null);
@@ -37,8 +38,8 @@ export function emitJoinSessionWithAck(
   });
 }
 
-export function emitJoinSession(socket: Socket, sessionId: string) {
-  void emitJoinSessionWithAck(socket, sessionId);
+export function emitJoinSession(socket: Socket, payload: JoinSessionPayload) {
+  void emitJoinSessionWithAck(socket, payload);
 }
 
 export function emitLeaveSession(socket: Socket, sessionId: string) {

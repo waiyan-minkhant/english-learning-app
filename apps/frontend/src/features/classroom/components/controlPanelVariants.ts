@@ -11,7 +11,7 @@ export const controlPanelShellVariants = cva(
 );
 
 export const controlPanelCellVariants = cva(
-  "flex flex-col items-center justify-center gap-2 px-md py-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+  "flex flex-col items-center justify-center px-md py-md transition-colors disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       interactive: {
@@ -38,8 +38,4 @@ export const controlPanelCircleVariants = cva(
       tone: "muted"
     }
   }
-);
-
-export const controlPanelLabelVariants = cva(
-  "text-body-12 font-medium text-foreground"
 );

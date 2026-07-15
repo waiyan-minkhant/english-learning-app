@@ -22,10 +22,10 @@ import {
   emitToRoom
 } from "../../realtime/realtime.gateway.js";
 import {
+  broadcastParticipantControls,
   clearParticipantControls,
   ensureParticipantControlsForUser,
-  getJoinControlsSnapshot,
-  initializeSessionParticipantControls
+  getJoinControlsSnapshot
 } from "./participant-controls.service.js";
 
 function createRoomId() {
@@ -64,8 +64,7 @@ async function terminateSession(sessionId: string) {
 
 export async function startSession(teacherId: string) {
   const classRecord = await prisma.class.findFirst({
-    where: { teacherId },
-    include: { students: true }
+    where: { teacherId }
   });
 
   if (!classRecord) {
@@ -87,11 +86,6 @@ export async function startSession(teacherId: string) {
   });
 
   await initializePresenceRoom(session.roomId);
-  await initializeSessionParticipantControls(
-    session.roomId,
-    classRecord.teacherId,
-    classRecord.students.map((student) => student.studentId)
-  );
 
   return { roomId: session.roomId };
 }
@@ -165,15 +159,13 @@ export async function handleJoinSession(
     return;
   }
 
-  console.log("[session] handleJoinSession", { user });
-
   const parsed = joinSessionPayloadSchema.safeParse(payload);
   if (!parsed.success) {
     ack?.({ error: "INVALID_PAYLOAD" });
     return;
   }
 
-  const sessionId = parsed.data;
+  const { sessionId, microphoneEnabled } = parsed.data;
   if (!(await hasPresenceRoom(sessionId))) {
     ack?.({ error: "SESSION_NOT_FOUND" });
     return;
@@ -192,7 +184,12 @@ export async function handleJoinSession(
   }
 
   await joinPresence(socket, user, sessionId);
-  await ensureParticipantControlsForUser(sessionId, user);
+  await ensureParticipantControlsForUser(
+    sessionId,
+    user,
+    microphoneEnabled !== undefined ? { microphoneEnabled } : undefined
+  );
+  await broadcastParticipantControls(sessionId);
   const { participantControls } = await getJoinControlsSnapshot(sessionId);
 
   ack?.({
@@ -205,7 +202,7 @@ export async function handleLeaveSession(socket: Socket, payload: unknown) {
   const user = getSocketUser(socket);
   if (!user) return;
 
-  const parsed = joinSessionPayloadSchema.safeParse(payload);
+  const parsed = endSessionPayloadSchema.safeParse(payload);
   if (!parsed.success) return;
 
   await leavePresence(socket, user, parsed.data);

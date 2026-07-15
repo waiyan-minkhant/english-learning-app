@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { UsersIcon } from "@/components/icons";
 import { Button } from "@/components/ui";
 import { ParticipantControlsPanel } from "@/features/classroom/components/ParticipantControlsPanel";
@@ -11,10 +11,12 @@ import { cn } from "@/utils/cn";
 
 type ParticipantControlsPopoverProps = {
   className?: string;
+  onOpenChange?: (open: boolean) => void;
 } & ParticipantControlsActions;
 
 export function ParticipantControlsPopover({
   className,
+  onOpenChange,
   updateParticipantControls,
   updateBulkParticipantControls
 }: ParticipantControlsPopoverProps) {
@@ -25,11 +27,19 @@ export function ParticipantControlsPopover({
     countActiveParticipants(state.participants)
   );
 
+  const setOpenAndNotify = useCallback(
+    (next: boolean) => {
+      setOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange]
+  );
+
   useEffect(() => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") setOpenAndNotify(false);
     };
 
     const onMouseDown = (event: MouseEvent) => {
@@ -37,7 +47,7 @@ export function ParticipantControlsPopover({
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setOpen(false);
+        setOpenAndNotify(false);
       }
     };
 
@@ -47,12 +57,15 @@ export function ParticipantControlsPopover({
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("mousedown", onMouseDown);
     };
-  }, [open]);
+  }, [open, setOpenAndNotify]);
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative", open && "z-50", className)}
+    >
       {open ? (
-        <div className="absolute bottom-full right-0 z-30 mb-2 drop-shadow-lg">
+        <div className="absolute bottom-full right-0 z-50 mb-2 drop-shadow-lg">
           <ParticipantControlsPanel
             id={panelId}
             updateParticipantControls={updateParticipantControls}
@@ -69,7 +82,7 @@ export function ParticipantControlsPopover({
           aria-expanded={open}
           aria-controls={panelId}
           aria-label="Show participants and controls"
-          onClick={() => setOpen((current) => !current)}
+          onClick={() => setOpenAndNotify(!open)}
         >
           <UsersIcon size={20} className="text-white" />
         </Button>

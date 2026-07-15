@@ -21,10 +21,10 @@ const {
   emitToRoom,
   disconnectRoom,
   emitSocketError,
-  initializeSessionParticipantControls,
   clearParticipantControls,
   ensureParticipantControlsForUser,
-  getJoinControlsSnapshot
+  getJoinControlsSnapshot,
+  broadcastParticipantControls
 } = vi.hoisted(() => ({
   classFindFirst: vi.fn(),
   liveSessionUpdateMany: vi.fn(),
@@ -39,10 +39,10 @@ const {
   emitToRoom: vi.fn(),
   disconnectRoom: vi.fn(),
   emitSocketError: vi.fn(),
-  initializeSessionParticipantControls: vi.fn(),
   clearParticipantControls: vi.fn(),
   ensureParticipantControlsForUser: vi.fn(),
-  getJoinControlsSnapshot: vi.fn()
+  getJoinControlsSnapshot: vi.fn(),
+  broadcastParticipantControls: vi.fn()
 }));
 
 vi.mock("../../../lib/prisma.js", () => ({
@@ -72,10 +72,10 @@ vi.mock("../../realtime/realtime.gateway.js", () => ({
 }));
 
 vi.mock("./participant-controls.service.js", () => ({
-  initializeSessionParticipantControls,
   clearParticipantControls,
   ensureParticipantControlsForUser,
-  getJoinControlsSnapshot
+  getJoinControlsSnapshot,
+  broadcastParticipantControls
 }));
 
 import {
@@ -89,7 +89,6 @@ import {
 } from "./session.service.js";
 
 const classId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
-const secondStudentId = "33333333-3333-4333-8333-333333333333";
 const sessionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
 describe("session.service", () => {
@@ -100,12 +99,12 @@ describe("session.service", () => {
     joinPresence.mockResolvedValue(undefined);
     leavePresence.mockResolvedValue(undefined);
     clearPresenceRoom.mockResolvedValue(undefined);
-    initializeSessionParticipantControls.mockResolvedValue(undefined);
     clearParticipantControls.mockResolvedValue(undefined);
     ensureParticipantControlsForUser.mockResolvedValue(undefined);
     getJoinControlsSnapshot.mockResolvedValue({
       participantControls: {}
     });
+    broadcastParticipantControls.mockResolvedValue(undefined);
     liveSessionUpdateMany.mockResolvedValue({ count: 0 });
     liveSessionUpdate.mockResolvedValue({});
     liveSessionFindFirst.mockResolvedValue({ id: sessionId });
@@ -123,11 +122,7 @@ describe("session.service", () => {
     it("ends live sessions, creates room, and initializes presence", async () => {
       classFindFirst.mockResolvedValue({
         id: classId,
-        teacherId: teacherUser().id,
-        students: [
-          { studentId: studentUser().id },
-          { studentId: secondStudentId }
-        ]
+        teacherId: teacherUser().id
       });
       liveSessionCreate.mockImplementation(
         async (args: { data: { roomId: string } }) => ({
@@ -149,11 +144,6 @@ describe("session.service", () => {
         })
       });
       expect(initializePresenceRoom).toHaveBeenCalledWith(result.roomId);
-      expect(initializeSessionParticipantControls).toHaveBeenCalledWith(
-        result.roomId,
-        teacherUser().id,
-        [studentUser().id, secondStudentId]
-      );
       expect(result.roomId).toMatch(/^class-[a-z0-9]{8}$/);
     });
   });
@@ -282,7 +272,11 @@ describe("session.service", () => {
   describe("handleJoinSession", () => {
     it("no-ops without authenticated user", async () => {
       const ack = vi.fn();
-      await handleJoinSession(mockSocket(), TEST_ROOM_ID, ack);
+      await handleJoinSession(
+        mockSocket(),
+        { sessionId: TEST_ROOM_ID },
+        ack
+      );
       expect(joinPresence).not.toHaveBeenCalled();
       expect(ack).toHaveBeenCalledWith({ error: "UNAUTHORIZED" });
     });
@@ -298,7 +292,11 @@ describe("session.service", () => {
       hasPresenceRoom.mockResolvedValue(false);
       const ack = vi.fn();
 
-      await handleJoinSession(mockSocket(teacherUser()), TEST_ROOM_ID, ack);
+      await handleJoinSession(
+        mockSocket(teacherUser()),
+        { sessionId: TEST_ROOM_ID },
+        ack
+      );
 
       expect(liveSessionFindFirst).not.toHaveBeenCalled();
       expect(joinPresence).not.toHaveBeenCalled();
@@ -310,7 +308,7 @@ describe("session.service", () => {
       const socket = mockSocket(teacherUser());
       const ack = vi.fn();
 
-      await handleJoinSession(socket, TEST_ROOM_ID, ack);
+      await handleJoinSession(socket, { sessionId: TEST_ROOM_ID }, ack);
 
       expect(clearPresenceRoom).toHaveBeenCalledWith(TEST_ROOM_ID);
       expect(clearParticipantControls).toHaveBeenCalledWith(TEST_ROOM_ID);
@@ -323,12 +321,12 @@ describe("session.service", () => {
       expect(ack).toHaveBeenCalledWith({ error: "SESSION_NOT_LIVE" });
     });
 
-    it("joins presence and acks controls snapshot for valid payload", async () => {
+    it("joins presence, ensures controls, broadcasts, and acks snapshot", async () => {
       const user = teacherUser();
       const socket = mockSocket(user);
       const ack = vi.fn();
 
-      await handleJoinSession(socket, TEST_ROOM_ID, ack);
+      await handleJoinSession(socket, { sessionId: TEST_ROOM_ID }, ack);
 
       expect(liveSessionFindFirst).toHaveBeenCalledWith({
         where: { roomId: TEST_ROOM_ID, status: "live" },
@@ -337,9 +335,33 @@ describe("session.service", () => {
       expect(joinPresence).toHaveBeenCalledWith(socket, user, TEST_ROOM_ID);
       expect(ensureParticipantControlsForUser).toHaveBeenCalledWith(
         TEST_ROOM_ID,
-        user
+        user,
+        undefined
       );
+      expect(broadcastParticipantControls).toHaveBeenCalledWith(TEST_ROOM_ID);
       expect(getJoinControlsSnapshot).toHaveBeenCalledWith(TEST_ROOM_ID);
+      expect(ack).toHaveBeenCalledWith({
+        roomId: TEST_ROOM_ID,
+        participantControls: {}
+      });
+    });
+
+    it("passes student microphoneEnabled preference into ensure", async () => {
+      const user = studentUser();
+      const socket = mockSocket(user);
+      const ack = vi.fn();
+
+      await handleJoinSession(
+        socket,
+        { sessionId: TEST_ROOM_ID, microphoneEnabled: true },
+        ack
+      );
+
+      expect(ensureParticipantControlsForUser).toHaveBeenCalledWith(
+        TEST_ROOM_ID,
+        user,
+        { microphoneEnabled: true }
+      );
       expect(ack).toHaveBeenCalledWith({
         roomId: TEST_ROOM_ID,
         participantControls: {}

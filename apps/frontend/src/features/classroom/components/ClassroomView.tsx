@@ -5,6 +5,7 @@ import { useState, type RefObject } from "react";
 import type { Socket } from "socket.io-client";
 import { Button, Text } from "@/components/ui";
 import { CursorOverlay } from "@/features/classroom/components/CursorOverlay";
+import { MediaControlsPopover } from "@/features/classroom/components/MediaControlsPopover";
 import { ParticipantControlsPopover } from "@/features/classroom/components/ParticipantControlsPopover";
 import { TeacherOfflineModal } from "@/features/classroom/components/TeacherOfflineModal";
 import { Toolbar } from "@/features/classroom/components/Toolbar";
@@ -37,6 +38,7 @@ export function ClassroomView({
   updateBulkParticipantControls
 }: ClassroomViewProps) {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [participantPopoverOpen, setParticipantPopoverOpen] = useState(false);
   const sidebarOpen = useUiStore((state) => state.classroomSidebarOpen);
   const videoServerUrl =
     process.env.NEXT_PUBLIC_LIVEKIT_URL ?? session.url;
@@ -72,11 +74,16 @@ export function ClassroomView({
             <CursorOverlay socketRef={socketRef} roomId={roomId} />
           </div>
           <Toolbar />
-          <ParticipantControlsPopover
-            className="absolute bottom-6 right-6 z-30"
-            updateParticipantControls={updateParticipantControls}
-            updateBulkParticipantControls={updateBulkParticipantControls}
-          />
+          <div className="absolute bottom-6 right-6 z-30 flex flex-col items-end gap-3">
+            {!sidebarOpen && !participantPopoverOpen ? (
+              <MediaControlsPopover />
+            ) : null}
+            <ParticipantControlsPopover
+              onOpenChange={setParticipantPopoverOpen}
+              updateParticipantControls={updateParticipantControls}
+              updateBulkParticipantControls={updateBulkParticipantControls}
+            />
+          </div>
         </section>
 
         <aside

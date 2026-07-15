@@ -91,6 +91,7 @@ export function ClassroomMediaProvider({
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoContainersRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const remoteAudioContainerRef = useRef<HTMLDivElement>(null);
+  const prevMicPermissionRef = useRef<boolean | null>(null);
 
   const [micEnabled, setMicEnabled] = useState(
     () => useMediaPreferencesStore.getState().micEnabled
@@ -108,11 +109,16 @@ export function ClassroomMediaProvider({
     const container = localVideoRef.current;
     if (!container) return;
 
+    if (!room.localParticipant.isCameraEnabled) {
+      container.replaceChildren();
+      return;
+    }
+
     const publication = room.localParticipant.getTrackPublication(
       Track.Source.Camera
     );
     const track = publication?.videoTrack;
-    if (track) {
+    if (track && !publication.isMuted) {
       attachTrack(track, container);
     } else {
       container.replaceChildren();
@@ -241,10 +247,40 @@ export function ClassroomMediaProvider({
     room.on(RoomEvent.LocalTrackUnpublished, syncMedia);
     room.on(RoomEvent.TrackSubscribed, syncMedia);
     room.on(RoomEvent.TrackUnsubscribed, syncMedia);
-    room.on(RoomEvent.TrackMuted, syncMedia);
-    room.on(RoomEvent.TrackUnmuted, syncMedia);
     room.on(RoomEvent.ParticipantConnected, syncMedia);
     room.on(RoomEvent.ParticipantDisconnected, syncMedia);
+
+    room.on(RoomEvent.TrackMuted, (publication, participant) => {
+      if (!active) return;
+      if (participant.isLocal) {
+        if (publication.kind === Track.Kind.Video) {
+          setCamEnabled(false);
+          localVideoRef.current?.replaceChildren();
+        }
+        return;
+      }
+      if (publication.kind !== Track.Kind.Video) return;
+      const userId = participant.identity;
+      remoteVideoContainersRef.current.get(userId)?.replaceChildren();
+      setRemoteCamEnabledByUserId((prev) => ({ ...prev, [userId]: false }));
+    });
+
+    room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+      if (!active) return;
+      if (participant.isLocal) {
+        if (publication.kind === Track.Kind.Video) {
+          setCamEnabled(true);
+          attachLocalVideo(room);
+        }
+        return;
+      }
+      if (publication.kind !== Track.Kind.Video) return;
+      setRemoteCamEnabledByUserId((prev) => ({
+        ...prev,
+        [participant.identity]: true
+      }));
+      attachAllRemoteVideos(room);
+    });
 
     async function connect() {
       try {
@@ -281,14 +317,29 @@ export function ClassroomMediaProvider({
   useEffect(() => {
     const room = roomRef.current;
     if (!room || room.state !== ConnectionState.Connected) return;
-    // Unlock only when allowed — do not force the mic on over user prefs.
-    if (microphoneEnabled) return;
 
+    const prev = prevMicPermissionRef.current;
+    prevMicPermissionRef.current = microphoneEnabled;
+
+    // First run after connect: keep dashboard preference unless teacher permission denies mic.
+    if (prev === null) {
+      if (!microphoneEnabled) {
+        void (async () => {
+          await room.localParticipant.setMicrophoneEnabled(false);
+          setMicEnabled(false);
+        })();
+      }
+      return;
+    }
+
+    if (prev === microphoneEnabled) return;
+
+    // Later permission changes from participant controls force LiveKit mic to match.
     void (async () => {
-      await room.localParticipant.setMicrophoneEnabled(false);
-      setMicEnabled(false);
+      await room.localParticipant.setMicrophoneEnabled(microphoneEnabled);
+      setMicEnabled(microphoneEnabled);
     })();
-  }, [microphoneEnabled]);
+  }, [connected, microphoneEnabled]);
 
   const toggleMic = useCallback(async () => {
     const room = roomRef.current;
@@ -305,9 +356,14 @@ export function ClassroomMediaProvider({
     if (!room || room.state !== ConnectionState.Connected) return;
 
     const next = !room.localParticipant.isCameraEnabled;
-    await room.localParticipant.setCameraEnabled(next);
     setCamEnabled(next);
-    attachLocalVideo(room);
+    if (!next) {
+      localVideoRef.current?.replaceChildren();
+    }
+    await room.localParticipant.setCameraEnabled(next);
+    if (next) {
+      attachLocalVideo(room);
+    }
   }, [attachLocalVideo]);
 
   const endCall = useCallback(async () => {

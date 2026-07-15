@@ -84,7 +84,8 @@ function StudentControlButtons({
     participant.userId,
     participant.role
   );
-
+  
+  console.log("effective", effective);
   return (
     <div className="flex shrink-0 items-center gap-1">
       <ControlToggleButton
@@ -233,7 +234,7 @@ function BulkActionsFooter({
     : "Disable all cursors";
 
   return (
-    <div className="shrink-0 border-t border-border bg-muted/30 px-3 py-2.5">
+    <div className="shrink-0 border-t border-border bg-surface px-3 py-2.5">
       <div className="grid grid-cols-2 gap-2">
         <Button
           type="button"

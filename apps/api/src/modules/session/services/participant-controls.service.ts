@@ -1,8 +1,7 @@
 import type { AuthUser } from "@english-learning/contracts";
 import { serverEvents } from "@english-learning/contracts/socket/events";
 import type {
-  JoinSessionSuccessPayload,
-  ParticipantControls
+  JoinSessionSuccessPayload
 } from "@english-learning/contracts/socket/schema";
 import {
   updateBulkParticipantControlsPayloadSchema,
@@ -27,7 +26,7 @@ async function isSessionLive(roomId: string): Promise<boolean> {
   return session !== null;
 }
 
-async function broadcastParticipantControls(sessionId: string) {
+export async function broadcastParticipantControls(sessionId: string) {
   const participantControls =
     await participantControlsState.getAllParticipantControls(sessionId);
 
@@ -65,33 +64,18 @@ export async function canUseMicrophone(sessionId: string, user: AuthUser) {
   return controls?.microphoneEnabled ?? false;
 }
 
-export async function initializeSessionParticipantControls(
-  sessionId: string,
-  teacherId: string,
-  studentIds: string[]
-) {
-  const entries: Record<string, ParticipantControls> = {
-      [teacherId]: participantControlsState.TEACHER_PARTICIPANT_CONTROLS
-    };
-
-  for (const studentId of studentIds) {
-    entries[studentId] = participantControlsState.STUDENT_PARTICIPANT_CONTROLS;
-  }
-
-  await participantControlsState.initializeParticipantControls(
-    sessionId,
-    entries
-  );
-}
-
 export async function ensureParticipantControlsForUser(
   sessionId: string,
-  user: AuthUser
+  user: AuthUser,
+  initial?: { microphoneEnabled?: boolean }
 ) {
   await participantControlsState.ensureParticipantControls(
     sessionId,
     user.id,
-    user.role
+    user.role,
+    user.role === "student" && initial?.microphoneEnabled !== undefined
+      ? { microphoneEnabled: initial.microphoneEnabled }
+      : undefined
   );
 }
 
