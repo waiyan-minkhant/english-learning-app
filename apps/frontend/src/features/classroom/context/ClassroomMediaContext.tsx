@@ -135,10 +135,15 @@ export function ClassroomMediaProvider({
           publication.isSubscribed &&
           publication.videoTrack
         ) {
+          const showing = isRemoteVideoShowing(publication);
           if (container) {
-            attachTrack(publication.videoTrack, container);
+            if (showing) {
+              attachTrack(publication.videoTrack, container);
+            } else {
+              container.replaceChildren();
+            }
           }
-          camState[userId] = isRemoteVideoShowing(publication);
+          camState[userId] = showing;
           attached = true;
           break;
         }
@@ -236,6 +241,8 @@ export function ClassroomMediaProvider({
     room.on(RoomEvent.LocalTrackUnpublished, syncMedia);
     room.on(RoomEvent.TrackSubscribed, syncMedia);
     room.on(RoomEvent.TrackUnsubscribed, syncMedia);
+    room.on(RoomEvent.TrackMuted, syncMedia);
+    room.on(RoomEvent.TrackUnmuted, syncMedia);
     room.on(RoomEvent.ParticipantConnected, syncMedia);
     room.on(RoomEvent.ParticipantDisconnected, syncMedia);
 
