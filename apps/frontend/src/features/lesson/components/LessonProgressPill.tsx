@@ -29,7 +29,7 @@ export function LessonProgressPill({
       />
       <div
         className={cn(
-          "absolute top-1/2 z-10 -translate-y-1/2 rounded-pill bg-primary px-3.5 py-0 shadow-md transition-[left] duration-300",
+          "absolute top-1/2 z-10 -translate-y-1/2 rounded-pill bg-primary px-4 py-0 shadow-md transition-[left] duration-300",
           clamped === 0 ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ left: `${clamped}%` }}

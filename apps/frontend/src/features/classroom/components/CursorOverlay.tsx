@@ -50,12 +50,6 @@ export function CursorOverlay({
   }, [animateCursors, tickIdleCursors]);
 
   useEffect(() => {
-    if (cursorEnabled) return;
-    if (!currentUser?.id) return;
-    removeCursor(currentUser.id);
-  }, [cursorEnabled, currentUser?.id, removeCursor]);
-
-  useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
 
@@ -90,7 +84,7 @@ export function CursorOverlay({
     }, 50);
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!cursorEnabled || !currentUser?.id) return;
+      if (!currentUser?.id) return;
 
       const rect = el.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -139,45 +133,61 @@ export function CursorOverlay({
   return (
     <div
       ref={canvasRef}
-      className={cn(
-        "absolute inset-0 z-20",
-        cursorEnabled && "cursor-none",
-        className
-      )}
+      className={cn("absolute inset-0 z-20 cursor-none", className)}
       aria-label="Collaborative cursor overlay"
     >
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden"
         aria-hidden
       >
-        {visibleCursors.map((cursor) => (
-          <div
-            key={cursor.userId}
-            className="absolute z-[1] flex items-center gap-1.5"
-            style={{
-              left: `${cursor.x * 100}%`,
-              top: `${cursor.y * 100}%`,
-              transform: "translate(-2px, -2px)"
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill={cursor.color}
-              className="drop-shadow-sm"
-              aria-hidden
+        {visibleCursors.map((cursor) => {
+          const isLocalDisabled =
+            cursor.userId === currentUser?.id && !cursorEnabled;
+
+          return (
+            <div
+              key={cursor.userId}
+              className="absolute z-[1] flex items-center gap-1.5"
+              style={{
+                left: `${cursor.x * 100}%`,
+                top: `${cursor.y * 100}%`,
+                transform: "translate(-2px, -2px)"
+              }}
             >
-              <path d="M5.5 3.5L19 12 10.5 13.5 8 21z" />
-            </svg>
-            <span
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm"
-              style={{ backgroundColor: cursor.color }}
-            >
-              {cursor.label}
-            </span>
-          </div>
-        ))}
+              {isLocalDisabled ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="text-muted-foreground drop-shadow-sm"
+                  aria-hidden
+                >
+                  <path d="M5.5 3.5L19 12 10.5 13.5 8 21z" />
+                </svg>
+              ) : (
+                <>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill={cursor.color}
+                    className="drop-shadow-sm"
+                    aria-hidden
+                  >
+                    <path d="M5.5 3.5L19 12 10.5 13.5 8 21z" />
+                  </svg>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm"
+                    style={{ backgroundColor: cursor.color }}
+                  >
+                    {cursor.label}
+                  </span>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
