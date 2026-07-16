@@ -71,7 +71,9 @@ export function ClassroomView({
               onSelectLesson={setSelectedLessonId}
               onChangeLesson={() => setSelectedLessonId(null)}
             />
-            <CursorOverlay socketRef={socketRef} roomId={roomId} />
+            {selectedLessonId ? (
+              <CursorOverlay socketRef={socketRef} roomId={roomId} />
+            ) : null}
           </div>
           <Toolbar />
           <div className="absolute bottom-6 right-6 z-30 flex flex-col items-end gap-3">

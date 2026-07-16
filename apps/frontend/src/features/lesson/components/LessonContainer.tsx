@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { LessonChrome } from "@/features/lesson/components/LessonChrome";
 import { LessonView } from "@/features/lesson/components/LessonView";
 import { LessonListView } from "@/features/lesson/components/LessonListView";
 import { useLessonStore } from "@/features/lesson/store/lessonStore";
@@ -40,10 +41,12 @@ export function LessonContainer({
   }
 
   return (
-    <LessonView
+    <LessonChrome
       lessonId={activeLessonId}
       mode={mode}
       onChangeLesson={onChangeLesson}
-    />
+    >
+      <LessonView lessonId={activeLessonId} mode={mode} />
+    </LessonChrome>
   );
 }

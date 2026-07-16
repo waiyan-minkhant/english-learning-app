@@ -31,12 +31,12 @@ export function ParticipantVideoTile({
   return (
     <Card
       className={cn(
-        "relative shrink-0 overflow-hidden border-0 bg-media shadow-none",
+        "relative shrink-0 overflow-hidden border-0 bg-surface shadow-none",
         VIDEO_TILE_HEIGHT_CLASS,
         className
       )}
     >
-      <div className="absolute inset-0 z-0 flex h-full flex-col items-center justify-center gap-3 bg-surface p-5 text-center">
+      <div className="absolute inset-0 z-0 flex h-full flex-col items-center justify-center gap-3 p-5 text-center">
         <Avatar fallback={fallback} className="h-16 w-16 text-title-20" />
         <div>
           <Text variant="caption" tone="muted" className="capitalize">
@@ -58,7 +58,7 @@ export function ParticipantVideoTile({
         <div
           ref={videoRef}
           className={cn(
-            "absolute inset-0 z-10 h-full w-full",
+            "absolute inset-0 z-10 h-full w-full scale-x-[-1] bg-media",
             !showVideo && "pointer-events-none opacity-0"
           )}
           aria-hidden={!showVideo}

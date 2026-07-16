@@ -1,11 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Button, Text } from "@/components/ui";
+import { Text } from "@/components/ui";
 import { useLessonViewModel } from "@/features/lesson/hooks/useLessonViewModel";
 import { Footer } from "@/features/lesson/components/Footer";
-import { ProgressBar } from "@/features/lesson/components/ProgressBar";
-import { Sidebar } from "@/features/lesson/components/Sidebar";
+import { LessonDevNav } from "@/features/lesson/components/LessonDevNav";
 import { StepRenderer } from "@/features/lesson/components/StepRenderer";
 import { useQuizSubmission } from "@/features/lesson/hooks/useQuizSubmission";
 import { lessonService } from "@/services/lessonService";
@@ -14,14 +13,9 @@ import { cn } from "@/utils/cn";
 type LessonViewProps = {
   lessonId: string;
   mode?: "solo" | "classroom";
-  onChangeLesson?: () => void;
 };
 
-export function LessonView({
-  lessonId,
-  mode = "solo",
-  onChangeLesson
-}: LessonViewProps) {
+export function LessonView({ lessonId, mode = "solo" }: LessonViewProps) {
   const lessonQuery = useQuery({
     queryKey: ["lesson", lessonId],
     queryFn: () => lessonService.getLesson(lessonId),
@@ -30,6 +24,9 @@ export function LessonView({
 
   const viewModel = useLessonViewModel(lessonId, { mode });
   const quiz = useQuizSubmission(viewModel.currentStep);
+  const isConversationStep =
+    viewModel.currentStep?.type === "exercise" &&
+    viewModel.currentStep.exerciseType === "conversation";
 
   if (lessonQuery.isLoading) {
     return (
@@ -52,68 +49,40 @@ export function LessonView({
   return (
     <div
       className={cn(
-        "flex h-full min-h-0 flex-col bg-background",
+        "relative flex h-full min-h-0 flex-col bg-surface",
         viewModel.compactLayout && "bg-transparent"
       )}
     >
-      <div className="flex min-h-0 flex-1">
-        {viewModel.showSidebar ? <Sidebar lessonId={lessonId} /> : null}
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header
-            className={cn(
-              "border-b border-border bg-surface py-4",
-              mode === "classroom" ? "px-10" : "px-6"
-            )}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <Text variant="title" size="title-20" as="h1">
-                  {viewModel.lessonTitle}
-                </Text>
-                <Text variant="body">{viewModel.lessonDescription}</Text>
-              </div>
-              {mode === "classroom" && onChangeLesson ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={onChangeLesson}
-                  className="shrink-0"
-                >
-                  Change lesson
-                </Button>
-              ) : null}
-            </div>
-            <div className="mt-4">
-              <ProgressBar
-                lessonId={lessonId}
-                compact={viewModel.compactLayout}
-              />
-            </div>
-          </header>
-
-          <div
-            className={cn(
-              "min-h-0 flex-1 overflow-y-auto py-6",
-              mode === "classroom" ? "px-10" : "px-6"
-            )}
-          >
-            <Text variant="label" tone="muted" className="mb-4">
-              {viewModel.currentStepTitle}
-            </Text>
-            {viewModel.currentStep ? (
-              <StepRenderer
-                step={viewModel.currentStep}
-                onExerciseComplete={quiz.markComplete}
-                onContentRead={quiz.markComplete}
-              />
-            ) : null}
-          </div>
-
-          {!viewModel.compactLayout ? <Footer lessonId={lessonId} /> : null}
-        </div>
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          mode === "classroom"
+            ? "px-10 pb-6 pt-20"
+            : "px-5 pb-8 pt-10 sm:px-10"
+        )}
+      >
+        {viewModel.currentStep ? (
+          <StepRenderer
+            step={viewModel.currentStep}
+            onExerciseComplete={quiz.markComplete}
+            onContentRead={quiz.markComplete}
+          />
+        ) : null}
       </div>
+
+      {!viewModel.compactLayout &&
+      !(isConversationStep && !quiz.canProceed) ? (
+        <Footer lessonId={lessonId} />
+      ) : null}
+
+      {process.env.NODE_ENV === "development" ? (
+        <LessonDevNav
+          stepIndex={viewModel.stepIndex}
+          stepCount={viewModel.progressBarItems.length}
+          onPrev={() => viewModel.onGoToStep(viewModel.stepIndex - 1)}
+          onNext={() => viewModel.onGoToStep(viewModel.stepIndex + 1)}
+        />
+      ) : null}
     </div>
   );
 }

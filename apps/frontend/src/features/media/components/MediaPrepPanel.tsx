@@ -103,7 +103,7 @@ export function MediaPrepPanel({ userName, className }: MediaPrepPanelProps) {
         <video
           ref={videoRef}
           className={cn(
-            "absolute inset-0 h-full w-full object-cover",
+            "absolute inset-0 h-full w-full scale-x-[-1] object-cover",
             !(camEnabled && permission === "granted") && "invisible"
           )}
           playsInline

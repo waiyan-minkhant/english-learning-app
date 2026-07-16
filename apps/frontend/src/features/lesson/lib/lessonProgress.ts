@@ -24,12 +24,8 @@ export function getLessonProgressPercent(
   const totalSteps = lesson.steps.length;
   if (totalSteps === 0) return 0;
 
-  const stepIndex = Math.min(
-    Math.max(slice.currentStepIndex, 0),
-    totalSteps - 1
-  );
-
-  return Math.round(((stepIndex + 1) / totalSteps) * 100);
+  const completedCount = Math.min(slice.completedStepIds.length, totalSteps);
+  return Math.round((completedCount / totalSteps) * 100);
 }
 
 export function isLessonComplete(
@@ -84,8 +80,9 @@ export function getLessonCardStatus(
   const slice = getProgressSlice(progressByLessonId, lesson.id);
   if (isLessonComplete(lesson, slice)) return "complete";
 
-  const percent = getLessonProgressPercent(lesson, slice);
-  if (percent > 0 && percent < 100) return "in_progress";
+  if (slice.completedStepIds.length > 0 || slice.currentStepIndex > 0) {
+    return "in_progress";
+  }
 
   return "available";
 }

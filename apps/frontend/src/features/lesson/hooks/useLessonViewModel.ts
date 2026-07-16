@@ -4,6 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useLessonNavigation } from "@/features/lesson/hooks/useLessonNavigation";
 import { useQuizSubmission } from "@/features/lesson/hooks/useQuizSubmission";
+import {
+  getLessonProgressPercent,
+  getProgressSlice
+} from "@/features/lesson/lib/lessonProgress";
 import { useLessonStore } from "@/features/lesson/store/lessonStore";
 import type { ProgressBarItem } from "@/features/lesson/types/Progress";
 import { lessonService } from "@/services/lessonService";
@@ -18,6 +22,9 @@ export function useLessonViewModel(
 ) {
   const { mode = "solo" } = options;
   const currentStepIndex = useLessonStore((state) => state.currentStepIndex);
+  const progressByLessonId = useLessonStore(
+    (state) => state.progressByLessonId
+  );
 
   const lessonQuery = useQuery({
     queryKey: ["lesson", lessonId],
@@ -51,9 +58,10 @@ export function useLessonViewModel(
         };
       }) ?? [];
 
-    const totalSteps = lesson?.steps.length ?? 0;
-    const progressPercent =
-      totalSteps > 0 ? Math.round(((stepIndex + 1) / totalSteps) * 100) : 0;
+    const progressSlice = getProgressSlice(progressByLessonId, lessonId);
+    const progressPercent = lesson
+      ? getLessonProgressPercent(lesson, progressSlice)
+      : 0;
 
     const currentStepTitle =
       currentStep?.title ??
@@ -69,8 +77,15 @@ export function useLessonViewModel(
         : "Finish lesson"
       : "Continue";
 
+    const listTitle =
+      lesson?.listTitle ??
+      (lesson?.number != null
+        ? `Lesson ${lesson.number} : ${lesson.title}`
+        : (lesson?.title ?? ""));
+
     return {
       lessonTitle: lesson?.title ?? "",
+      listTitle,
       lessonDescription: lesson?.description ?? "",
       progressPercent,
       progressBarItems,
@@ -78,7 +93,7 @@ export function useLessonViewModel(
       canGoNext,
       canGoBack,
       nextButtonLabel,
-      showSidebar: mode === "solo",
+      showSidebar: false,
       compactLayout: mode === "classroom",
       stepIndex,
       currentStep,
@@ -96,6 +111,8 @@ export function useLessonViewModel(
     };
   }, [
     lesson,
+    lessonId,
+    progressByLessonId,
     stepIndex,
     currentStep,
     quiz,

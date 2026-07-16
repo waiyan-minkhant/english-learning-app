@@ -5,6 +5,7 @@ import {
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiHome,
   FiLock,
   FiMessageSquare,
   FiMic,
@@ -13,6 +14,7 @@ import {
   FiPhoneOff,
   FiSettings,
   FiUsers,
+  FiVolume2,
   FiX
 } from "react-icons/fi";
 import { cn } from "@/utils/cn";
@@ -30,6 +32,8 @@ function createIcon(Icon: IconType) {
 
 export const CheckIcon = createIcon(FiCheck);
 export const CloseIcon = createIcon(FiX);
+export const HomeIcon = createIcon(FiHome);
+export const SpeakerIcon = createIcon(FiVolume2);
 export const MicrophoneIcon = createIcon(FiMic);
 export const MicrophoneOffIcon = createIcon(FiMicOff);
 export const MousePointerIcon = createIcon(FiMousePointer);

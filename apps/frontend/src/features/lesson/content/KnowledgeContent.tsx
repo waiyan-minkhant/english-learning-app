@@ -1,47 +1,76 @@
-import { Button, Card, CardContent, CardHeader, CardTitle, Text } from "@/components/ui";
+"use client";
+
+import Image from "next/image";
+import { useEffect, useRef } from "react";
+import { Text } from "@/components/ui";
+import { SpeakerIcon } from "@/components/icons";
 
 type KnowledgeContentProps = {
   title?: string;
   onContinue?: () => void;
 };
 
-export function KnowledgeContent({
-  title = "Lesson content",
-  onContinue
-}: KnowledgeContentProps) {
+const KNOWLEDGE_TITLE = "Do you know about Singapore?";
+const KNOWLEDGE_BODY =
+  "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.";
+
+const KNOWLEDGE_IMAGES = [
+  {
+    src: "/lesson/knowledge_sharing_pic1.png",
+    alt: "Marina Bay Sands and ArtScience Museum in Singapore"
+  },
+  {
+    src: "/lesson/knowledge_sharing_pic2.png",
+    alt: "Merlion statue with Singapore skyline"
+  }
+] as const;
+
+export function KnowledgeContent({ onContinue }: KnowledgeContentProps) {
+  const markedRef = useRef(false);
+
+  useEffect(() => {
+    if (markedRef.current || !onContinue) return;
+    markedRef.current = true;
+    onContinue();
+  }, [onContinue]);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Text variant="body" tone="default">
-          In this section, your teacher shares key vocabulary and grammar points
-          for the lesson. Review the examples below before moving on to exercises.
-        </Text>
-        <ul className="list-disc space-y-2 pl-5">
-          <li>
-            <Text variant="body" tone="default" as="span">
-              Use simple present tense for daily routines.
-            </Text>
-          </li>
-          <li>
-            <Text variant="body" tone="default" as="span">
-              Greetings: Hello, Hi, Good morning.
-            </Text>
-          </li>
-          <li>
-            <Text variant="body" tone="default" as="span">
-              Polite responses: Thank you, You&apos;re welcome.
-            </Text>
-          </li>
-        </ul>
-        {onContinue ? (
-          <Button type="button" variant="ghost" onClick={onContinue}>
-            Mark as read
-          </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <div className="relative flex flex-col gap-3 rounded-xl bg-gradient-to-b from-locked-gradient-from to-locked-gradient-to px-5 py-4">
+        <button
+          type="button"
+          aria-label="Play audio"
+          className="absolute right-5 top-4 inline-flex text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <SpeakerIcon size={22} className="text-inherit" />
+        </button>
+
+        <div className="flex flex-col gap-3 pr-10">
+          <Text variant="label" tone="primary" weight="semibold">
+            {KNOWLEDGE_TITLE}
+          </Text>
+          <Text variant="body" tone="default" className="!leading-7">
+            {KNOWLEDGE_BODY}
+          </Text>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {KNOWLEDGE_IMAGES.map((image) => (
+          <div
+            key={image.src}
+            className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted"
+          >
+            <Image
+              src={image.src}
+              alt={image.alt}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 50vw, 384px"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
