@@ -19,15 +19,16 @@ enum LiveSessionStatus {
 }
 
 model User {
-  id               String         @id @default(uuid())
-  email            String         @unique
-  name             String
-  passwordHash     String
-  role             UserRole       @default(student)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  teacherClasses   Class[]        @relation("TeacherClasses")
-  classMemberships ClassStudent[]
+  id                   String                @id @default(uuid())
+  email                String                @unique
+  name                 String
+  passwordHash         String
+  role                 UserRole              @default(student)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  teacherClasses       Class[]               @relation("TeacherClasses")
+  classMemberships     ClassStudent[]
+  conversationAttempts ConversationAttempt[]
 }
 
 model Class {
@@ -67,4 +68,23 @@ model LiveSession {
   class     Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   @@map("LiveSession")
+}
+
+model ConversationAttempt {
+  id                   String   @id @default(uuid())
+  userId               String
+  lessonId             String
+  exerciseId           String
+  sessionId            String?
+  transcript           String
+  answeredQuestion     Int
+  grammar              Int
+  vocabulary           Int
+  sentenceCompleteness Int
+  feedback             String
+  createdAt            DateTime @default(now())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, exerciseId])
+  @@map("ConversationAttempt")
 }

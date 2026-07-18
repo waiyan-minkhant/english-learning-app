@@ -50,8 +50,11 @@ export function CursorOverlay({
   }, [animateCursors, tickIdleCursors]);
 
   useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
+    const overlay = canvasRef.current;
+    const trackTarget = overlay?.parentElement;
+    if (!overlay || !trackTarget) return;
+
+    trackTarget.classList.add("cursor-none");
 
     const emitMove = throttle((clientX: number, clientY: number) => {
       if (!cursorEnabled) return;
@@ -59,7 +62,7 @@ export function CursorOverlay({
       const socket = socketRef.current;
       if (!socket?.connected) return;
 
-      const rect = el.getBoundingClientRect();
+      const rect = trackTarget.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return;
 
       const px = clientX - rect.left;
@@ -86,7 +89,7 @@ export function CursorOverlay({
     const onMouseMove = (e: MouseEvent) => {
       if (!currentUser?.id) return;
 
-      const rect = el.getBoundingClientRect();
+      const rect = trackTarget.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return;
 
       const { x, y } = normalizePointer(rect, e.clientX, e.clientY);
@@ -110,11 +113,12 @@ export function CursorOverlay({
       lastSentPyRef.current = null;
     };
 
-    el.addEventListener("mousemove", onMouseMove);
-    el.addEventListener("mouseleave", onMouseLeave);
+    trackTarget.addEventListener("mousemove", onMouseMove);
+    trackTarget.addEventListener("mouseleave", onMouseLeave);
     return () => {
-      el.removeEventListener("mousemove", onMouseMove);
-      el.removeEventListener("mouseleave", onMouseLeave);
+      trackTarget.classList.remove("cursor-none");
+      trackTarget.removeEventListener("mousemove", onMouseMove);
+      trackTarget.removeEventListener("mouseleave", onMouseLeave);
     };
   }, [
     socketRef,
@@ -133,7 +137,7 @@ export function CursorOverlay({
   return (
     <div
       ref={canvasRef}
-      className={cn("absolute inset-0 z-20 cursor-none", className)}
+      className={cn("pointer-events-none absolute inset-0 z-20", className)}
       aria-label="Collaborative cursor overlay"
     >
       <div

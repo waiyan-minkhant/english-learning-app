@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
+import multer from "multer";
 import { logger } from "../utils/logger.js";
 import { AppError } from "./app-error.js";
+import { ValidationError } from "./validation-error.js";
 
 export function errorHandler(
   err: unknown,
@@ -8,17 +10,26 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  if (err instanceof AppError && err.expose) {
+  const normalized =
+    err instanceof multer.MulterError
+      ? new ValidationError(
+          err.code === "LIMIT_FILE_SIZE"
+            ? "Audio file is too large (max 10MB)"
+            : err.message
+        )
+      : err;
+
+  if (normalized instanceof AppError && normalized.expose) {
     const body: { code: string; message: string; details?: unknown } = {
-      code: err.code,
-      message: err.message
+      code: normalized.code,
+      message: normalized.message
     };
 
-    if (err.details !== undefined) {
-      body.details = err.details;
+    if (normalized.details !== undefined) {
+      body.details = normalized.details;
     }
 
-    return res.status(err.statusCode).json(body);
+    return res.status(normalized.statusCode).json(body);
   }
 
   logger.error(err);

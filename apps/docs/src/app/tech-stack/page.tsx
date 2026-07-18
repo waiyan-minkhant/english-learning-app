@@ -51,7 +51,7 @@ const stackSections = [
     title: "Shared (packages/contracts)",
     description: "Single source of truth for cross-boundary types.",
     items: [
-      { name: "Zod schemas", role: "Auth (incl. name), class (studentIds), session, video, socket payloads" },
+      { name: "Zod schemas", role: "Auth (incl. name), class (studentId), session, video, socket payloads" },
       { name: "Event constants", role: "clientEvents / serverEvents maps" },
       { name: "Workspace package", role: "Imported by API & frontend" }
     ]

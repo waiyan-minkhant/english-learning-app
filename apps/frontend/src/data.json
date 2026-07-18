@@ -13,25 +13,48 @@
           "id": "step-1",
           "type": "exercise",
           "exerciseType": "conversation",
-          "title": "Warm-up Conversation"
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore.",
+              "audioUrl": "/audio/lesson-1/exercise-1.1.mp3"
+            },
+            {
+              "text": "Where are you from?",
+              "audioUrl": "/audio/lesson-1/exercise-1.2.mp3"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 1"
+          "title": "Lesson Content 1",
+          "audioUrl": "/audio/lesson-1/exercise-2.mp3"
         },
         {
           "id": "step-3",
           "type": "exercise",
           "exerciseType": "fill_in_blank",
-          "title": "Exercise 1"
+          "title": "Fill in the blank"
         },
         {
           "id": "step-4",
           "type": "exercise",
-          "exerciseType": "matching",
-          "title": "Exercise 2"
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Listen and build sentence",
+          "audioUrl": "/audio/lesson-1/exercise-4.mp3"
         },
         {
           "id": "step-5",
@@ -42,7 +65,7 @@
         {
           "id": "step-6",
           "type": "exercise",
-          "exerciseType": "listen_and_build_sentence",
+          "exerciseType": "matching",
           "title": "Exercise 3"
         },
         {
@@ -71,7 +94,26 @@
           "id": "step-1",
           "type": "exercise",
           "exerciseType": "conversation",
-          "title": "Warm-up Conversation"
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore."
+            },
+            {
+              "text": "Where are you from?"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",
@@ -83,7 +125,7 @@
           "id": "step-3",
           "type": "exercise",
           "exerciseType": "fill_in_blank",
-          "title": "Exercise 1"
+          "title": "Fill in the blank"
         },
         {
           "id": "step-4",
@@ -129,7 +171,26 @@
           "id": "step-1",
           "type": "exercise",
           "exerciseType": "conversation",
-          "title": "Warm-up Conversation"
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore."
+            },
+            {
+              "text": "Where are you from?"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",
@@ -186,7 +247,27 @@
         {
           "id": "step-1",
           "type": "exercise",
-          "exerciseType": "conversation"
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore."
+            },
+            {
+              "text": "Where are you from?"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",
@@ -236,7 +317,27 @@
         {
           "id": "step-1",
           "type": "exercise",
-          "exerciseType": "conversation"
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore."
+            },
+            {
+              "text": "Where are you from?"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",
@@ -286,7 +387,27 @@
         {
           "id": "step-1",
           "type": "exercise",
-          "exerciseType": "conversation"
+          "exerciseType": "conversation",
+          "title": "Warm-up Conversation",
+          "prompt": "Where are you from?",
+          "dialogueLines": [
+            {
+              "text": "I am from Singapore."
+            },
+            {
+              "text": "Where are you from?"
+            }
+          ],
+          "aiSuggestions": [
+            "I am from [Current City].",
+            "I'm originally from [Current City].",
+            "I'm based in [Current City] now, but I grew up in [Birthplace]."
+          ],
+          "expectedTopics": [
+            "origin",
+            "city",
+            "country"
+          ]
         },
         {
           "id": "step-2",

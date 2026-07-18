@@ -290,7 +290,7 @@ services/         authService, sessionService, videoService, lessonService`}
 {`socket.ts     createSocket(), disconnectSocket() — withCredentials to API
 events.ts     Re-exports clientEvents / serverEvents from contracts
 emit.ts       joinSession, emitJoinSessionWithAck, leaveSession, endSession,
-              moveCursor, updateParticipantControls, updateBulkParticipantControls
+              moveCursor, updateParticipantControls
 listeners.ts  parsePresenceUpdated, parseCursorMoved,
               parseParticipantControlsUpdatedPayload, … (Zod safeParse)`}
         </CodeBlock>

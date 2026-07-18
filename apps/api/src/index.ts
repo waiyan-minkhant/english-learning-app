@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import { Server } from "socket.io";
 import { authRouter } from "./modules/auth/routes/auth.routes.js";
+import { learningRouter } from "./modules/learning/routes/learning.routes.js";
 import { attachRealtimeServer } from "./modules/realtime/socket/realtime.socket.js";
 import { sessionRouter } from "./modules/session/routes/session.routes.js";
 import { videoRouter } from "./modules/video/routes/video.routes.js";
@@ -30,6 +31,7 @@ app.get("/health", (_req, res) => {
 app.use("/auth", authRouter);
 app.use("/sessions", sessionRouter);
 app.use("/video", videoRouter);
+app.use("/learning", learningRouter);
 
 app.use(errorHandler);
 

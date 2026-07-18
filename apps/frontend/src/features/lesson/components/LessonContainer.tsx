@@ -9,6 +9,7 @@ import { useLessonStore } from "@/features/lesson/store/lessonStore";
 type LessonContainerProps = {
   lessonId?: string;
   mode?: "solo" | "classroom";
+  sessionId?: string;
   selectedLessonId?: string | null;
   onSelectLesson?: (lessonId: string) => void;
   onChangeLesson?: () => void;
@@ -17,6 +18,7 @@ type LessonContainerProps = {
 export function LessonContainer({
   lessonId,
   mode = "solo",
+  sessionId,
   selectedLessonId = null,
   onSelectLesson,
   onChangeLesson
@@ -46,7 +48,11 @@ export function LessonContainer({
       mode={mode}
       onChangeLesson={onChangeLesson}
     >
-      <LessonView lessonId={activeLessonId} mode={mode} />
+      <LessonView
+        lessonId={activeLessonId}
+        mode={mode}
+        sessionId={sessionId}
+      />
     </LessonChrome>
   );
 }

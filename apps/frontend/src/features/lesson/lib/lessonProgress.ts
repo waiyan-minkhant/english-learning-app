@@ -24,8 +24,12 @@ export function getLessonProgressPercent(
   const totalSteps = lesson.steps.length;
   if (totalSteps === 0) return 0;
 
-  const completedCount = Math.min(slice.completedStepIds.length, totalSteps);
-  return Math.round((completedCount / totalSteps) * 100);
+  const currentStep = Math.min(
+    Math.max(slice.currentStepIndex, 0),
+    totalSteps - 1
+  );
+
+  return Math.min(100, Math.ceil((currentStep / totalSteps) * 100));
 }
 
 export function isLessonComplete(

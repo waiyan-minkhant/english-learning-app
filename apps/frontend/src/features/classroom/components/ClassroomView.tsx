@@ -67,6 +67,7 @@ export function ClassroomView({
           >
             <LessonContainer
               mode="classroom"
+              sessionId={roomId}
               selectedLessonId={selectedLessonId}
               onSelectLesson={setSelectedLessonId}
               onChangeLesson={() => setSelectedLessonId(null)}

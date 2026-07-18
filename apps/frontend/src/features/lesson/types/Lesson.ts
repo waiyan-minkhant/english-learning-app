@@ -10,18 +10,29 @@ export const exerciseTypeSchema = z.enum([
 
 export const contentTypeSchema = z.enum(["knowledge"]);
 
+export const dialogueLineSchema = z.object({
+  text: z.string(),
+  audioUrl: z.string().optional()
+});
+
 export const exerciseStepSchema = z.object({
   id: z.string(),
   type: z.literal("exercise"),
   exerciseType: exerciseTypeSchema,
-  title: z.string().optional()
+  title: z.string().optional(),
+  /** Spoken prompt the student should answer (conversation). */
+  prompt: z.string().optional(),
+  dialogueLines: z.array(dialogueLineSchema).optional(),
+  aiSuggestions: z.array(z.string()).optional(),
+  expectedTopics: z.array(z.string()).optional()
 });
 
 export const contentStepSchema = z.object({
   id: z.string(),
   type: z.literal("content"),
   contentType: contentTypeSchema,
-  title: z.string().optional()
+  title: z.string().optional(),
+  audioUrl: z.string().optional()
 });
 
 export const stepSchema = z.discriminatedUnion("type", [
@@ -50,6 +61,7 @@ export const courseSchema = z.object({
 
 export type ExerciseType = z.infer<typeof exerciseTypeSchema>;
 export type ContentType = z.infer<typeof contentTypeSchema>;
+export type DialogueLine = z.infer<typeof dialogueLineSchema>;
 export type ExerciseStep = z.infer<typeof exerciseStepSchema>;
 export type ContentStep = z.infer<typeof contentStepSchema>;
 export type Step = z.infer<typeof stepSchema>;

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "@/components/ui";
+import { useCurrentUser } from "@/features/auth/store/authStore";
 import { useLessonViewModel } from "@/features/lesson/hooks/useLessonViewModel";
 import { Footer } from "@/features/lesson/components/Footer";
 import { LessonDevNav } from "@/features/lesson/components/LessonDevNav";
@@ -13,20 +14,28 @@ import { cn } from "@/utils/cn";
 type LessonViewProps = {
   lessonId: string;
   mode?: "solo" | "classroom";
+  sessionId?: string;
 };
 
-export function LessonView({ lessonId, mode = "solo" }: LessonViewProps) {
+export function LessonView({
+  lessonId,
+  mode = "solo",
+  sessionId
+}: LessonViewProps) {
   const lessonQuery = useQuery({
     queryKey: ["lesson", lessonId],
     queryFn: () => lessonService.getLesson(lessonId),
     enabled: !!lessonId
   });
 
+  const currentUser = useCurrentUser();
   const viewModel = useLessonViewModel(lessonId, { mode });
   const quiz = useQuizSubmission(viewModel.currentStep);
   const isConversationStep =
     viewModel.currentStep?.type === "exercise" &&
     viewModel.currentStep.exerciseType === "conversation";
+  const lessonTitle = lessonQuery.data?.title ?? "Lesson";
+  const isTeacher = currentUser?.role === "teacher";
 
   if (lessonQuery.isLoading) {
     return (
@@ -64,6 +73,9 @@ export function LessonView({ lessonId, mode = "solo" }: LessonViewProps) {
         {viewModel.currentStep ? (
           <StepRenderer
             step={viewModel.currentStep}
+            lessonId={lessonId}
+            lessonTitle={lessonTitle}
+            sessionId={sessionId}
             onExerciseComplete={quiz.markComplete}
             onContentRead={quiz.markComplete}
           />
@@ -75,7 +87,7 @@ export function LessonView({ lessonId, mode = "solo" }: LessonViewProps) {
         <Footer lessonId={lessonId} />
       ) : null}
 
-      {process.env.NODE_ENV === "development" ? (
+      {isTeacher ? (
         <LessonDevNav
           stepIndex={viewModel.stepIndex}
           stepCount={viewModel.progressBarItems.length}

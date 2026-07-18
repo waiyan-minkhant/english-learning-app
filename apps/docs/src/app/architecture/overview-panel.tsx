@@ -66,7 +66,7 @@ export function OverviewPanel() {
   → LiveKit: WebRTC audio/video (direct to cloud)
 
 API (apps/api)
-  → Postgres: users (with name), classes + ClassStudent, LiveSession
+  → Postgres: users (with name), Class (1 teacher + 1 student via ClassStudent), LiveSession
   → Redis: presence roster, participant controls, socket-to-room bindings
   → LiveKit SDK: mint short-lived room tokens
 

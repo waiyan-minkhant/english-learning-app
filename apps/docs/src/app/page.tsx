@@ -12,7 +12,7 @@ const highlights = [
   },
   {
     title: "Role-based access",
-    body: "Teachers start multi-student class sessions; enrolled students join the live room. Auth uses JWT in httpOnly cookies."
+    body: "Teachers start a one-to-one class session; their assigned student joins the live room. Auth uses JWT in httpOnly cookies."
   },
   {
     title: "Shared contracts",
@@ -26,7 +26,7 @@ export default function OverviewPage() {
       <PageHeader
         eyebrow="Realtime learning platform"
         title="English Learning App"
-        description="A full-stack platform for live English classes — combining multi-student video, realtime presence, teacher participant controls, and collaborative tools in a single classroom experience."
+        description="A full-stack platform for live English classes — combining one-to-one teacher–student video, realtime presence, teacher participant controls, and collaborative tools in a single classroom experience."
       />
 
       <section className="mb-12 grid gap-4 sm:grid-cols-2">
@@ -47,11 +47,12 @@ export default function OverviewPage() {
         <h2>What this project is</h2>
         <p>
           English Learning App is a realtime virtual classroom built for
-          structured teacher–student sessions. A teacher is assigned to many
-          students through <code>Class</code> and <code>ClassStudent</code>{" "}
-          records in PostgreSQL. When the teacher starts a session, a unique
-          room is created and the class enters a call page with video, a shared
-          lesson canvas, and a participant controls panel.
+          structured one-to-one teacher–student sessions. Each class links one
+          teacher to one student through <code>Class</code> and{" "}
+          <code>ClassStudent</code> records in PostgreSQL. When the teacher
+          starts a session, a unique room is created and both participants enter
+          a call page with video, a shared lesson canvas, and a participant
+          controls panel.
         </p>
         <p>
           The backend owns session state, authentication, presence tracking,

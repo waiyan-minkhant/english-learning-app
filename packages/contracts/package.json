@@ -11,6 +11,7 @@
     "./realtime": "./realtime.contract.ts",
     "./session": "./session.contract.ts",
     "./video": "./video.contract.ts",
+    "./learning": "./learning.contract.ts",
     "./socket/events": "./socket/events.ts",
     "./socket/schema": "./socket/schema.ts"
   },

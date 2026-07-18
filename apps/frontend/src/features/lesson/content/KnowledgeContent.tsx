@@ -4,9 +4,12 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Text } from "@/components/ui";
 import { SpeakerIcon } from "@/components/icons";
+import { useAudioPlayer } from "@/features/lesson/hooks/useAudioPlayer";
+import { cn } from "@/utils/cn";
 
 type KnowledgeContentProps = {
   title?: string;
+  audioUrl?: string;
   onContinue?: () => void;
 };
 
@@ -16,17 +19,21 @@ const KNOWLEDGE_BODY =
 
 const KNOWLEDGE_IMAGES = [
   {
-    src: "/lesson/knowledge_sharing_pic1.png",
+    src: "/img/lesson-1/knowledge_sharing_pic1.png",
     alt: "Marina Bay Sands and ArtScience Museum in Singapore"
   },
   {
-    src: "/lesson/knowledge_sharing_pic2.png",
+    src: "/img/lesson-1/knowledge_sharing_pic2.png",
     alt: "Merlion statue with Singapore skyline"
   }
 ] as const;
 
-export function KnowledgeContent({ onContinue }: KnowledgeContentProps) {
+export function KnowledgeContent({
+  audioUrl,
+  onContinue
+}: KnowledgeContentProps) {
   const markedRef = useRef(false);
+  const { play } = useAudioPlayer();
 
   useEffect(() => {
     if (markedRef.current || !onContinue) return;
@@ -40,7 +47,14 @@ export function KnowledgeContent({ onContinue }: KnowledgeContentProps) {
         <button
           type="button"
           aria-label="Play audio"
-          className="absolute right-5 top-4 inline-flex text-muted-foreground transition-colors hover:text-foreground"
+          disabled={!audioUrl}
+          onClick={() => {
+            if (audioUrl) play(audioUrl);
+          }}
+          className={cn(
+            "absolute right-5 top-4 inline-flex text-muted-foreground transition-colors",
+            audioUrl ? "hover:text-foreground" : "cursor-default opacity-40"
+          )}
         >
           <SpeakerIcon size={22} className="text-inherit" />
         </button>

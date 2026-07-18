@@ -21,28 +21,30 @@ export function LessonDevNav({
   const canNext = stepIndex < stepCount - 1;
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-4 z-50 flex items-center gap-2 rounded-lg border border-border bg-surface/95 px-2 py-1.5 shadow-md backdrop-blur-sm">
-      <Text variant="caption" tone="muted" className="px-1">
-        Dev
-      </Text>
+    <div className="pointer-events-auto absolute bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-primary px-2 py-1.5 text-primary-foreground shadow-md">
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         size="sm"
         onClick={onPrev}
         disabled={!canPrev}
+        className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
       >
         Prev
       </Button>
-      <Text variant="caption" tone="muted" className="min-w-10 text-center tabular-nums">
+      <Text
+        variant="caption"
+        className="min-w-10 text-center tabular-nums text-primary-foreground"
+      >
         {stepIndex + 1}/{stepCount}
       </Text>
       <Button
         type="button"
-        variant="secondary"
+        variant="ghost"
         size="sm"
         onClick={onNext}
         disabled={!canNext}
+        className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
       >
         Next
       </Button>

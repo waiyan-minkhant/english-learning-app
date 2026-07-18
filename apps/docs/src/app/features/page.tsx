@@ -16,7 +16,7 @@ const currentFeatures = [
   {
     title: "Class & session management",
     description:
-      "Classes enroll many students via ClassStudent. Teachers start a live session for their class; any enrolled student can join that shared room. Sessions are persisted with scheduled, live, and ended statuses.",
+      "Each class pairs one teacher with one student via ClassStudent. The teacher starts a live session; their assigned student joins that room. Sessions are persisted with scheduled, live, and ended statuses.",
     tags: ["PostgreSQL", "REST"]
   },
   {
@@ -40,7 +40,7 @@ const currentFeatures = [
   {
     title: "Participant controls",
     description:
-      "Teachers toggle per-student (or all students) microphone and cursor permissions. State lives in Redis, is returned on join_session ack, and broadcasts as participant_controls_updated. On first join, student mic may seed from the dashboard preference (default off); teachers stay privileged.",
+      "Teachers toggle the student’s microphone and cursor permissions. State lives in Redis, is returned on join_session ack, and broadcasts as participant_controls_updated. On first join, student mic may seed from the dashboard preference (default off); teachers stay privileged.",
     tags: ["Socket.IO", "Redis"]
   },
   {
@@ -170,19 +170,17 @@ export default function FeaturesPage() {
       <section className="prose-docs mt-14">
         <h2>Demo accounts</h2>
         <p>
-          Seeded users (password <code>password123</code> for all). Both
-          students enroll in the same class:
+          Seeded users for the one-to-one demo (password{" "}
+          <code>password123</code> for both):
         </p>
         <ul>
           <li>
-            <code>teacher@demo.local</code> — Clair (teacher); starts sessions
+            <code>teacher@demo.local</code> — Clair (teacher); starts the
+            session
           </li>
           <li>
-            <code>student1@demo.local</code> — Aung Aung; joins the live class
-          </li>
-          <li>
-            <code>student2@demo.local</code> — Kyaw Kyaw; joins the same live
-            class
+            <code>student1@demo.local</code> — Aung Aung (student); joins the
+            teacher&apos;s live class
           </li>
         </ul>
       </section>

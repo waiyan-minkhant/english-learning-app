@@ -23,7 +23,7 @@ const apiModules = [
     name: "Session / Participant controls",
     path: "modules/session/services/participant-controls.service.ts",
     responsibility:
-      "Redis map of per-user microphoneEnabled / cursorEnabled. Created on socket join via ensure (student mic may seed from dashboard preference); teacher-only single and bulk updates; clear on end. canUseCursor / canUseMicrophone gate cursor relay and client media."
+      "Redis map of per-user microphoneEnabled / cursorEnabled. Created on socket join via ensure (student mic may seed from dashboard preference); teacher-only updates for the student; clear on end. canUseCursor / canUseMicrophone gate cursor relay and client media."
   },
   {
     name: "Realtime / Presence",
@@ -205,8 +205,7 @@ Response / socket event (also schema-checked where applicable)`}
 leave_session                     sessionId
 end_session                       sessionId (teacher only)
 move_cursor                       { sessionId, x, y }
-update_participant_controls       { sessionId, userId, mic?, cursor? }
-update_bulk_participant_controls  { sessionId, target: "all_students", … }`}
+update_participant_controls       { sessionId, userId, mic?, cursor? }`}
           </CodeBlock>
           <CodeBlock title="Server → client">
 {`presence_updated             { sessionId, participants[] }
@@ -252,7 +251,7 @@ participant:controls:{sessionId} → hash { userId → { microphoneEnabled, curs
 
 Presence entry: { email, name, role, status, socketIds[] }
 Status: online | reconnecting | offline
-Defaults: teacher mic+cursor on; students mic on, cursor off`}
+Defaults: teacher mic+cursor on; student mic on, cursor off`}
         </CodeBlock>
         <CodeBlock title="socket_error payload">
 {`{
@@ -325,12 +324,11 @@ Defaults: teacher mic+cursor on; students mic on, cursor off`}
             student)
           </li>
           <li>
-            <strong>Class</strong> — links one teacher, a lessonId, and many
-            students via <strong>ClassStudent</strong>
+            <strong>Class</strong> — links one teacher, a lessonId, and one
+            student via <strong>ClassStudent</strong>
           </li>
           <li>
-            <strong>ClassStudent</strong> — enrollment join table (classId,
-            studentId)
+            <strong>ClassStudent</strong> — enrollment link (classId, studentId)
           </li>
           <li>
             <strong>LiveSession</strong> — unique roomId, status (scheduled |
@@ -350,10 +348,10 @@ Defaults: teacher mic+cursor on; students mic on, cursor off`}
         </p>
         <h4>Participant control defaults</h4>
         <p>
-          Teachers always have microphone and cursor enabled and are never
-          bulk-muted. Students default to microphone on and cursor off so the
-          teacher can open canvas collaboration intentionally. An in-memory
-          store mirrors Redis for Vitest without Docker.
+          Teachers always have microphone and cursor enabled. The student
+          defaults to microphone on and cursor off so the teacher can open
+          canvas collaboration intentionally. An in-memory store mirrors Redis
+          for Vitest without Docker.
         </p>
         <h4>Normalized cursor coordinates</h4>
         <p>
