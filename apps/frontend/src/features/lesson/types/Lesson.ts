@@ -5,7 +5,8 @@ export const exerciseTypeSchema = z.enum([
   "fill_in_blank",
   "matching",
   "listen_and_build_sentence",
-  "listen_and_speak"
+  "listen_and_speak",
+  "listen_and_fill_in_blank"
 ]);
 
 export const contentTypeSchema = z.enum(["knowledge"]);
@@ -20,6 +21,7 @@ export const exerciseStepSchema = z.object({
   type: z.literal("exercise"),
   exerciseType: exerciseTypeSchema,
   title: z.string().optional(),
+  audioUrl: z.string().optional(),
   /** Spoken prompt the student should answer (conversation). */
   prompt: z.string().optional(),
   dialogueLines: z.array(dialogueLineSchema).optional(),

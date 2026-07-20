@@ -2,6 +2,7 @@ import type { ExerciseStep } from "@/features/lesson/types/Lesson";
 import { ConversationExercise } from "@/features/lesson/exercises/conversation/ConversationExercise";
 import { FillBlankExercise } from "@/features/lesson/exercises/fillBlank/FillBlankExercise";
 import { ListenBuildExercise } from "@/features/lesson/exercises/listenBuild/ListenBuildExercise";
+import { ListenFillBlankExercise } from "@/features/lesson/exercises/listenFillBlank/ListenFillBlankExercise";
 import { ListenSpeakExercise } from "@/features/lesson/exercises/listenSpeak/ListenSpeakExercise";
 import { MatchingExercise } from "@/features/lesson/exercises/matching/MatchingExercise";
 
@@ -67,6 +68,15 @@ export function ExerciseRenderer({
       return (
         <ListenSpeakExercise
           title={step.title}
+          onComplete={onComplete}
+          disabled={disabled}
+        />
+      );
+    case "listen_and_fill_in_blank":
+      return (
+        <ListenFillBlankExercise
+          title={step.title}
+          audioUrl={step.audioUrl}
           onComplete={onComplete}
           disabled={disabled}
         />

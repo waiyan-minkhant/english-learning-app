@@ -58,27 +58,23 @@
         },
         {
           "id": "step-5",
-          "type": "content",
-          "contentType": "knowledge",
-          "title": "Lesson Content 2"
+          "type": "exercise",
+          "exerciseType": "matching",
+          "title": "Matching"
         },
         {
           "id": "step-6",
           "type": "exercise",
-          "exerciseType": "matching",
-          "title": "Exercise 3"
+          "exerciseType": "listen_and_speak",
+          "title": "Listen and speak",
+          "audioUrl": "/audio/lesson-1/exercise-6.mp3"
         },
         {
           "id": "step-7",
           "type": "exercise",
-          "exerciseType": "listen_and_speak",
-          "title": "Exercise 4"
-        },
-        {
-          "id": "step-8",
-          "type": "content",
-          "contentType": "knowledge",
-          "title": "Lesson Summary"
+          "exerciseType": "listen_and_fill_in_blank",
+          "title": "Listen and fill in the blank",
+          "audioUrl": "/audio/lesson-1/exercise-7.mp3"
         }
       ],
       "number": 1,
