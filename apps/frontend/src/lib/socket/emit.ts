@@ -1,5 +1,7 @@
 import type {
   JoinSessionPayload,
+  RevealLessonAnswersPayload,
+  SetLessonItemPayload,
   UpdateBulkParticipantControlsPayload,
   UpdateParticipantControlsPayload
 } from "@english-learning/contracts/socket/schema";
@@ -69,4 +71,18 @@ export function emitUpdateBulkParticipantControls(
   payload: UpdateBulkParticipantControlsPayload
 ) {
   socket.emit(clientEvents.updateBulkParticipantControls, payload);
+}
+
+export function emitRevealLessonAnswers(
+  socket: Socket,
+  payload: RevealLessonAnswersPayload
+) {
+  socket.emit(clientEvents.revealLessonAnswers, payload);
+}
+
+export function emitSetLessonItem(
+  socket: Socket,
+  payload: SetLessonItemPayload
+) {
+  socket.emit(clientEvents.setLessonItem, payload);
 }

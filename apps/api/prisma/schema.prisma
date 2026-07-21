@@ -18,17 +18,57 @@ enum LiveSessionStatus {
   ended
 }
 
+enum LessonItemType {
+  conversation
+  fill_in_blank
+  matching
+  listen_and_build_sentence
+  listen_and_speak
+  listen_and_fill_in_blank
+  knowledge
+  demo_complete
+}
+
+enum LessonDifficulty {
+  easy
+  medium
+  hard
+}
+
+enum LessonProgressStatus {
+  not_started
+  in_progress
+  completed
+}
+
+enum LearningSessionMode {
+  solo
+  classroom
+}
+
+enum LearningSessionStatus {
+  live
+  ended
+}
+
 model User {
-  id                   String                @id @default(uuid())
-  email                String                @unique
-  name                 String
-  passwordHash         String
-  role                 UserRole              @default(student)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  teacherClasses       Class[]               @relation("TeacherClasses")
-  classMemberships     ClassStudent[]
-  conversationAttempts ConversationAttempt[]
+  id                         String                       @id @default(uuid())
+  email                      String                       @unique
+  name                       String
+  passwordHash               String
+  role                       UserRole                     @default(student)
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+  teacherClasses             Class[]                      @relation("TeacherClasses")
+  classMemberships           ClassStudent[]
+  conversationAttempts       ConversationAttempt[]
+  fillBlankAttempts          FillBlankAttempt[]
+  listenBuildSentenceAttempts ListenBuildSentenceAttempt[]
+  listenFillBlankAttempts    ListenFillBlankAttempt[]
+  matchingAttempts           MatchingAttempt[]
+  listenSpeakAttempts        ListenSpeakAttempt[]
+  lessonProgress             UserLessonProgress[]
+  learningSessionsStarted    LearningSession[]            @relation("LearningSessionStarter")
 }
 
 model Class {
@@ -57,34 +97,294 @@ model ClassStudent {
 }
 
 model LiveSession {
-  id        String            @id @default(uuid())
-  roomId    String            @unique
-  status    LiveSessionStatus @default(scheduled)
-  startedAt DateTime?
-  endedAt   DateTime?
-  classId   String
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  class     Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
+  id               String             @id @default(uuid())
+  roomId           String             @unique
+  status           LiveSessionStatus  @default(scheduled)
+  startedAt        DateTime?
+  endedAt          DateTime?
+  classId          String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  class            Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  learningSessions LearningSession[]
 
   @@map("LiveSession")
 }
 
+model LearningSession {
+  id                  String                @id @default(uuid())
+  mode                LearningSessionMode
+  status              LearningSessionStatus @default(live)
+  lessonId            String
+  currentLessonItemId String?
+  answerRevealed      Boolean               @default(false)
+  startedById         String
+  liveSessionId       String?
+  startedAt           DateTime              @default(now())
+  endedAt             DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  lesson              Lesson                @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  currentLessonItem   LessonItem?           @relation("LearningSessionCurrentItem", fields: [currentLessonItemId], references: [id], onDelete: SetNull)
+  startedBy           User                  @relation("LearningSessionStarter", fields: [startedById], references: [id], onDelete: Cascade)
+  liveSession         LiveSession?          @relation(fields: [liveSessionId], references: [id], onDelete: SetNull)
+  conversationAttempts       ConversationAttempt[]
+  fillBlankAttempts          FillBlankAttempt[]
+  listenBuildSentenceAttempts ListenBuildSentenceAttempt[]
+  listenFillBlankAttempts    ListenFillBlankAttempt[]
+  matchingAttempts           MatchingAttempt[]
+  listenSpeakAttempts        ListenSpeakAttempt[]
+
+  @@index([startedById])
+  @@index([lessonId])
+  @@index([status])
+  @@index([liveSessionId])
+  @@map("LearningSession")
+}
+
+model Course {
+  id          String   @id
+  title       String
+  description String
+  level       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id               String               @id
+  courseId         String
+  number           Int
+  title            String
+  description      String
+  estimatedMinutes Int
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  course           Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  items            LessonItem[]
+  progress         UserLessonProgress[]
+  learningSessions LearningSession[]
+
+  @@unique([courseId, number])
+  @@index([courseId])
+}
+
+model LessonItem {
+  id        String           @id
+  lessonId  String
+  order     Int
+  type      LessonItemType
+  difficulty LessonDifficulty @default(easy)
+  title     String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  lesson    Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  conversationExercise       ConversationExercise?
+  fillBlankExercise          FillBlankExercise?
+  listenBuildSentenceExercise ListenBuildSentenceExercise?
+  listenFillBlankExercise    ListenFillBlankExercise?
+  matchingExercise           MatchingExercise?
+  listenSpeakExercise        ListenSpeakExercise?
+  knowledgeContent           KnowledgeContent?
+
+  conversationAttempts       ConversationAttempt[]
+  fillBlankAttempts          FillBlankAttempt[]
+  listenBuildSentenceAttempts ListenBuildSentenceAttempt[]
+  listenFillBlankAttempts    ListenFillBlankAttempt[]
+  matchingAttempts           MatchingAttempt[]
+  listenSpeakAttempts        ListenSpeakAttempt[]
+  currentProgress            UserLessonProgress[] @relation("CurrentLessonItem")
+  learningSessionsCurrent    LearningSession[]    @relation("LearningSessionCurrentItem")
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+}
+
+model ConversationExercise {
+  lessonItemId       String     @id
+  instruction        String?
+  question           String
+  assessmentCriteria Json
+  expectedTopics     Json?
+  sampleAnswers      Json?
+  dialogue           Json
+  lessonItem         LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model FillBlankExercise {
+  lessonItemId   String     @id
+  instruction    String?
+  sentenceBefore String
+  sentenceAfter  String
+  options        Json
+  correctAnswer  String
+  lessonItem     LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model ListenBuildSentenceExercise {
+  lessonItemId String     @id
+  instruction  String?
+  audioUrl     String?
+  words        Json
+  correctOrder Json
+  lessonItem   LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model ListenFillBlankExercise {
+  lessonItemId   String     @id
+  instruction    String?
+  audioUrl       String?
+  sentenceBefore String
+  sentenceAfter  String
+  options        Json
+  correctAnswer  String
+  lessonItem     LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model MatchingExercise {
+  lessonItemId String     @id
+  instruction  String?
+  pairs        Json
+  lessonItem   LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model ListenSpeakExercise {
+  lessonItemId     String     @id
+  instruction      String?
+  expectedSentence String
+  audioUrl         String?
+  lessonItem       LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model KnowledgeContent {
+  lessonItemId String     @id
+  body         String
+  audioUrl     String?
+  images       Json?
+  lessonItem   LessonItem @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+}
+
+model UserLessonProgress {
+  id             String               @id @default(uuid())
+  userId         String
+  lessonId       String
+  currentItemId  String?
+  status         LessonProgressStatus @default(not_started)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  lastAccessedAt DateTime             @default(now())
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson         Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  currentItem    LessonItem?          @relation("CurrentLessonItem", fields: [currentItemId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+}
+
 model ConversationAttempt {
-  id                   String   @id @default(uuid())
+  id                   String          @id @default(uuid())
   userId               String
   lessonId             String
-  exerciseId           String
-  sessionId            String?
+  lessonItemId         String
+  learningSessionId    String
   transcript           String
   answeredQuestion     Int
   grammar              Int
   vocabulary           Int
   sentenceCompleteness Int
   feedback             String
-  createdAt            DateTime @default(now())
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime        @default(now())
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem           LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession      LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
 
-  @@index([userId, exerciseId])
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
   @@map("ConversationAttempt")
+}
+
+model FillBlankAttempt {
+  id                String          @id @default(uuid())
+  userId            String
+  lessonItemId      String
+  learningSessionId String
+  selectedAnswer    String
+  correct           Boolean
+  createdAt         DateTime        @default(now())
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem        LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession   LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
+}
+
+model ListenBuildSentenceAttempt {
+  id                String          @id @default(uuid())
+  userId            String
+  lessonItemId      String
+  learningSessionId String
+  submittedOrder    Json
+  correct           Boolean
+  createdAt         DateTime        @default(now())
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem        LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession   LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
+}
+
+model ListenFillBlankAttempt {
+  id                String          @id @default(uuid())
+  userId            String
+  lessonItemId      String
+  learningSessionId String
+  selectedAnswer    String
+  correct           Boolean
+  createdAt         DateTime        @default(now())
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem        LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession   LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
+}
+
+model MatchingAttempt {
+  id                String          @id @default(uuid())
+  userId            String
+  lessonItemId      String
+  learningSessionId String
+  selectedPairs     Json
+  correct           Boolean
+  createdAt         DateTime        @default(now())
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem        LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession   LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
+}
+
+model ListenSpeakAttempt {
+  id                 String          @id @default(uuid())
+  userId             String
+  lessonItemId       String
+  learningSessionId  String
+  transcript         String
+  pronunciationScore Int?
+  feedback           String
+  createdAt          DateTime        @default(now())
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonItem         LessonItem      @relation(fields: [lessonItemId], references: [id], onDelete: Cascade)
+  learningSession    LearningSession @relation(fields: [learningSessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonItemId])
+  @@index([learningSessionId])
 }

@@ -6,10 +6,14 @@ import { Text } from "@/components/ui";
 import { HomeIcon } from "@/components/icons";
 import { LessonProgressPill } from "@/features/lesson/components/LessonProgressPill";
 import { useLessonViewModel } from "@/features/lesson/hooks/useLessonViewModel";
+import { cn } from "@/utils/cn";
 
 type LessonChromeProps = {
   lessonId: string;
   mode?: "solo" | "classroom";
+  learningSessionId: string;
+  syncedItemId?: string | null;
+  onSyncGoToItem?: (itemId: string) => void;
   onChangeLesson?: () => void;
   children: ReactNode;
 };
@@ -20,10 +24,18 @@ const homeButtonClassName =
 export function LessonChrome({
   lessonId,
   mode = "solo",
+  learningSessionId,
+  syncedItemId = null,
+  onSyncGoToItem,
   onChangeLesson,
   children
 }: LessonChromeProps) {
-  const { listTitle, progressPercent } = useLessonViewModel(lessonId, { mode });
+  const { listTitle, progressPercent } = useLessonViewModel(lessonId, {
+    mode,
+    learningSessionId,
+    syncedItemId,
+    onSyncGoToItem
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-surface">
@@ -37,16 +49,22 @@ export function LessonChrome({
             >
               <HomeIcon size={18} className="text-primary-foreground" />
             </Link>
-          ) : (
+          ) : onChangeLesson ? (
             <button
               type="button"
               aria-label="Back to lesson list"
               className={homeButtonClassName}
               onClick={onChangeLesson}
-              disabled={!onChangeLesson}
             >
               <HomeIcon size={18} className="text-primary-foreground" />
             </button>
+          ) : (
+            <span
+              className={cn(homeButtonClassName, "pointer-events-none opacity-40")}
+              aria-hidden
+            >
+              <HomeIcon size={18} className="text-primary-foreground" />
+            </span>
           )}
           <Text
             variant="heading"

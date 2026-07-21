@@ -6,25 +6,45 @@ import {
   CardTitle,
   Text
 } from "@/components/ui";
+import { lessonService } from "@/services/lessonService";
+import type { StudentAttemptView } from "@/features/realtime/hooks/useLessonAttemptsSync";
 
 type ListenSpeakExerciseProps = {
+  lessonItemId: string;
+  learningSessionId: string;
   title?: string;
+  expectedSentence?: string;
+  audioUrl?: string;
   onComplete: () => void;
   disabled?: boolean;
+  sharedAttempt?: StudentAttemptView | null;
 };
 
 export function ListenSpeakExercise({
+  lessonItemId,
+  learningSessionId,
   title = "Listen and speak",
+  expectedSentence,
   onComplete,
-  disabled
+  disabled,
+  sharedAttempt = null
 }: ListenSpeakExerciseProps) {
+  const completed = sharedAttempt?.type === "listen_and_speak";
+
+  if (!expectedSentence) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center pt-2">
+        <Text variant="body" tone="danger">
+          Listen-and-speak data is missing from the lesson.
+        </Text>
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <Text variant="body">
-          Listen to the phrase, then repeat it aloud.
-        </Text>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-md bg-foreground p-6 text-center">
@@ -34,15 +54,29 @@ export function ListenSpeakExercise({
             tone="default"
             className="text-primary-foreground"
           >
-            Nice to meet you!
+            {expectedSentence}
           </Text>
           <Text variant="caption" className="mt-2 text-primary-foreground/70">
             Tap play to listen (placeholder)
           </Text>
         </div>
-        <Button type="button" onClick={onComplete} disabled={disabled}>
-          I spoke the phrase
-        </Button>
+        {completed ? (
+          <Text variant="body" tone="success">
+            Phrase spoken
+          </Text>
+        ) : (
+          <Button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              void lessonService
+                .submitListenSpeakAttempt(lessonItemId, learningSessionId)
+                .then(() => onComplete());
+            }}
+          >
+            I spoke the phrase
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

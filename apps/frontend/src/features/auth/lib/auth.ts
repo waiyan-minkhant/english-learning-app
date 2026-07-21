@@ -4,12 +4,10 @@ import {
   authSuccessResponseSchema,
   authUserSchema,
   loginRequestSchema,
-  registerRequestSchema,
   type AuthCredentials,
   type AuthSuccessResponse,
   type AuthUser,
   type LoginRequest,
-  type RegisterRequest,
   type UserRole
 } from "@english-learning/contracts";
 
@@ -23,11 +21,9 @@ export type SessionUser = AuthMeResponse["user"];
 export {
   authCredentialsSchema,
   loginRequestSchema,
-  registerRequestSchema,
   authSuccessResponseSchema,
   type AuthCredentials,
   type LoginRequest,
-  type RegisterRequest,
   type AuthSuccessResponse,
   type AuthUser,
   type UserRole
@@ -35,10 +31,6 @@ export {
 
 export function parseLoginRequest(data: unknown): LoginRequest {
   return loginRequestSchema.parse(data);
-}
-
-export function parseRegisterRequest(data: unknown): RegisterRequest {
-  return registerRequestSchema.parse(data);
 }
 
 export function parseAuthMeResponse(data: unknown): AuthMeResponse {

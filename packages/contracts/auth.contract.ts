@@ -7,8 +7,6 @@ export const authCredentialsSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters")
 });
 
-export const registerRequestSchema = authCredentialsSchema;
-
 export const loginRequestSchema = authCredentialsSchema;
 
 export const authUserSchema = z.object({
@@ -33,7 +31,6 @@ export const authSuccessResponseSchema = z.object({
 export type UserRole = z.infer<typeof userRoleSchema>;
 
 export type AuthCredentials = z.infer<typeof authCredentialsSchema>;
-export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
 export type AuthUser = z.infer<typeof authUserSchema>;

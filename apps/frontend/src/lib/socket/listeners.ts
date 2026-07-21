@@ -1,6 +1,9 @@
 import {
   cursorMovedPayloadSchema,
   joinSessionSuccessPayloadSchema,
+  lessonAnswersRevealedPayloadSchema,
+  lessonAttemptSubmittedPayloadSchema,
+  lessonStateUpdatedPayloadSchema,
   participantControlsUpdatedPayloadSchema,
   participantEventPayloadSchema,
   presenceUpdatedPayloadSchema,
@@ -9,6 +12,9 @@ import {
   teacherOfflinePayloadSchema,
   type CursorMovedPayload,
   type JoinSessionSuccessPayload,
+  type LessonAnswersRevealedPayload,
+  type LessonAttemptSubmittedPayload,
+  type LessonStateUpdatedPayload,
   type ParticipantControlsUpdatedPayload,
   type ParticipantEventPayload,
   type Presence,
@@ -21,6 +27,9 @@ import {
 export type {
   CursorMovedPayload,
   JoinSessionSuccessPayload,
+  LessonAnswersRevealedPayload,
+  LessonAttemptSubmittedPayload,
+  LessonStateUpdatedPayload,
   ParticipantControlsUpdatedPayload,
   ParticipantEventPayload,
   Presence,
@@ -70,4 +79,22 @@ export function parseParticipantControlsUpdatedPayload(
   data: unknown
 ): ParticipantControlsUpdatedPayload {
   return participantControlsUpdatedPayloadSchema.parse(data);
+}
+
+export function parseLessonAnswersRevealedPayload(
+  data: unknown
+): LessonAnswersRevealedPayload {
+  return lessonAnswersRevealedPayloadSchema.parse(data);
+}
+
+export function parseLessonStateUpdatedPayload(
+  data: unknown
+): LessonStateUpdatedPayload {
+  return lessonStateUpdatedPayloadSchema.parse(data);
+}
+
+export function parseLessonAttemptSubmittedPayload(
+  data: unknown
+): LessonAttemptSubmittedPayload {
+  return lessonAttemptSubmittedPayloadSchema.parse(data);
 }

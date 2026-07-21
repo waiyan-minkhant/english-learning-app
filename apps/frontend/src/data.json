@@ -1,450 +1,1094 @@
 {
-  "courseId": "elementary-english",
+  "id": "elementary-english",
   "title": "Elementary English",
+  "description": "Let's continue your journey to becoming an English superstar! Which lesson are we tackling today?",
   "level": "Elementary",
   "lessons": [
     {
       "id": "lesson-1",
+      "number": 1,
       "title": "Introduce Yourself",
       "description": "Learn about introducing yourself when meeting a stranger.",
       "estimatedMinutes": 20,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson1-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore.",
-              "audioUrl": "/audio/lesson-1/exercise-1.1.mp3"
-            },
-            {
-              "text": "Where are you from?",
-              "audioUrl": "/audio/lesson-1/exercise-1.2.mp3"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore.",
+                "audioUrl": "/audio/lesson-1/exercise-1.1.mp3"
+              },
+              {
+                "text": "Where are you from?",
+                "audioUrl": "/audio/lesson-1/exercise-1.2.mp3"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson1-knowledge-singapore",
+          "order": 2,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 1",
-          "audioUrl": "/audio/lesson-1/exercise-2.mp3"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "audio": "/audio/lesson-1/exercise-2.mp3",
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson1-fill-in-blank",
+          "order": 3,
           "type": "exercise",
           "exerciseType": "fill_in_blank",
-          "title": "Fill in the blank"
+          "title": "Fill in the blank",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson1-listen-and-build-sentence",
+          "order": 4,
           "type": "exercise",
           "exerciseType": "listen_and_build_sentence",
           "title": "Listen and build sentence",
-          "audioUrl": "/audio/lesson-1/exercise-4.mp3"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "audioUrl": "/audio/lesson-1/exercise-4.mp3",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson1-matching",
+          "order": 5,
           "type": "exercise",
           "exerciseType": "matching",
-          "title": "Matching"
+          "title": "Matching",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-6",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak",
-          "title": "Listen and speak",
-          "audioUrl": "/audio/lesson-1/exercise-6.mp3"
-        },
-        {
-          "id": "step-7",
+          "id": "lesson1-listen-and-fill-in-blank",
+          "order": 6,
           "type": "exercise",
           "exerciseType": "listen_and_fill_in_blank",
           "title": "Listen and fill in the blank",
-          "audioUrl": "/audio/lesson-1/exercise-7.mp3"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and choose the missing word.",
+            "audioUrl": "/audio/lesson-1/exercise-7.mp3",
+            "sentenceBefore": "I like",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Myanmar",
+              "Football"
+            ],
+            "correctAnswer": "Football"
+          }
+        },
+        {
+          "id": "lesson1-demo-complete",
+          "order": 7,
+          "type": "content",
+          "contentType": "demo_complete",
+          "title": "Demo complete",
+          "difficulty": "easy",
+          "data": {}
         }
-      ],
-      "number": 1,
-      "listTitle": "Lesson 1 : Introduce Yourself"
+      ]
     },
     {
       "id": "lesson-2",
+      "number": 2,
       "title": "Daily Life",
       "description": "Routines, habits, and telling time in simple English sentences.",
       "estimatedMinutes": 20,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson2-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore."
-            },
-            {
-              "text": "Where are you from?"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore."
+              },
+              {
+                "text": "Where are you from?"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson2-knowledge-singapore-a",
+          "order": 2,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 1"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson2-fill-in-blank",
+          "order": 3,
           "type": "exercise",
           "exerciseType": "fill_in_blank",
-          "title": "Fill in the blank"
+          "title": "Fill in the blank",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson2-matching",
+          "order": 4,
           "type": "exercise",
           "exerciseType": "matching",
-          "title": "Exercise 2"
+          "title": "Exercise 2",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson2-knowledge-singapore-b",
+          "order": 5,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 2"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-6",
+          "id": "lesson2-listen-and-build-sentence",
+          "order": 6,
           "type": "exercise",
           "exerciseType": "listen_and_build_sentence",
-          "title": "Exercise 3"
+          "title": "Exercise 3",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-7",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak",
-          "title": "Exercise 4"
-        },
-        {
-          "id": "step-8",
+          "id": "lesson2-knowledge-singapore-c",
+          "order": 7,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Summary"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         }
-      ],
-      "number": 2,
-      "listTitle": "Lesson 2 : Daily Life"
+      ]
     },
     {
       "id": "lesson-3",
+      "number": 3,
       "title": "Food & Shopping",
       "description": "Identifying fruits, vegetables, and basic market interactions.",
       "estimatedMinutes": 20,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson3-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore."
-            },
-            {
-              "text": "Where are you from?"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore."
+              },
+              {
+                "text": "Where are you from?"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson3-knowledge-singapore-a",
+          "order": 2,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 1"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson3-fill-in-blank",
+          "order": 3,
           "type": "exercise",
           "exerciseType": "fill_in_blank",
-          "title": "Exercise 1"
+          "title": "Exercise 1",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson3-matching",
+          "order": 4,
           "type": "exercise",
           "exerciseType": "matching",
-          "title": "Exercise 2"
+          "title": "Exercise 2",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson3-knowledge-singapore-b",
+          "order": 5,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Content 2"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-6",
+          "id": "lesson3-listen-and-build-sentence",
+          "order": 6,
           "type": "exercise",
           "exerciseType": "listen_and_build_sentence",
-          "title": "Exercise 3"
+          "title": "Exercise 3",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-7",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak",
-          "title": "Exercise 4"
-        },
-        {
-          "id": "step-8",
+          "id": "lesson3-knowledge-singapore-c",
+          "order": 7,
           "type": "content",
           "contentType": "knowledge",
-          "title": "Lesson Summary"
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         }
-      ],
-      "number": 3,
-      "listTitle": "Lesson 3 : Food & Shopping"
+      ]
     },
     {
       "id": "lesson-4",
+      "number": 4,
       "title": "Travel",
       "description": "Asking for directions and common transportation vocabulary.",
       "estimatedMinutes": 20,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson4-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore."
-            },
-            {
-              "text": "Where are you from?"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore."
+              },
+              {
+                "text": "Where are you from?"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson4-knowledge-singapore-a",
+          "order": 2,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson4-fill-in-blank",
+          "order": 3,
           "type": "exercise",
-          "exerciseType": "fill_in_blank"
+          "exerciseType": "fill_in_blank",
+          "title": "Fill in the blank",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson4-matching",
+          "order": 4,
           "type": "exercise",
-          "exerciseType": "matching"
+          "exerciseType": "matching",
+          "title": "Matching",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson4-knowledge-singapore-b",
+          "order": 5,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-6",
+          "id": "lesson4-listen-and-build-sentence",
+          "order": 6,
           "type": "exercise",
-          "exerciseType": "listen_and_build_sentence"
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Listen and build sentence",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-7",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak"
-        },
-        {
-          "id": "step-8",
+          "id": "lesson4-knowledge-singapore-c",
+          "order": 7,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         }
-      ],
-      "number": 4,
-      "listTitle": "Lesson 4 : Travel"
+      ]
     },
     {
       "id": "lesson-5",
+      "number": 5,
       "title": "School & Work",
       "description": "Classroom items and describing daily activities at school.",
       "estimatedMinutes": 20,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson5-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore."
-            },
-            {
-              "text": "Where are you from?"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore."
+              },
+              {
+                "text": "Where are you from?"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson5-knowledge-singapore-a",
+          "order": 2,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson5-fill-in-blank",
+          "order": 3,
           "type": "exercise",
-          "exerciseType": "fill_in_blank"
+          "exerciseType": "fill_in_blank",
+          "title": "Fill in the blank",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson5-matching",
+          "order": 4,
           "type": "exercise",
-          "exerciseType": "matching"
+          "exerciseType": "matching",
+          "title": "Matching",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson5-knowledge-singapore-b",
+          "order": 5,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-6",
+          "id": "lesson5-listen-and-build-sentence",
+          "order": 6,
           "type": "exercise",
-          "exerciseType": "listen_and_build_sentence"
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Listen and build sentence",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-7",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak"
-        },
-        {
-          "id": "step-8",
+          "id": "lesson5-knowledge-singapore-c",
+          "order": 7,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         }
-      ],
-      "number": 5,
-      "listTitle": "Lesson 5 : School & Work"
+      ]
     },
     {
       "id": "lesson-6",
+      "number": 6,
       "title": "Social Conversation",
       "description": "Expressing feelings and having basic chats with friends.",
       "estimatedMinutes": 25,
-      "steps": [
+      "items": [
         {
-          "id": "step-1",
+          "id": "lesson6-conversation",
+          "order": 1,
           "type": "exercise",
           "exerciseType": "conversation",
           "title": "Warm-up Conversation",
-          "prompt": "Where are you from?",
-          "dialogueLines": [
-            {
-              "text": "I am from Singapore."
-            },
-            {
-              "text": "Where are you from?"
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Answer the following question.",
+            "question": "Where are you from?",
+            "dialogue": [
+              {
+                "text": "I am from Singapore."
+              },
+              {
+                "text": "Where are you from?"
+              }
+            ],
+            "sampleAnswers": [
+              "I am from [Current City].",
+              "I'm originally from [Current City].",
+              "I'm based in [Current City] now, but I grew up in [Birthplace]."
+            ],
+            "assessment": {
+              "criteria": [
+                "answeredQuestion",
+                "grammar",
+                "vocabulary",
+                "sentenceCompleteness"
+              ],
+              "expectedTopics": [
+                "origin",
+                "city",
+                "country"
+              ]
             }
-          ],
-          "aiSuggestions": [
-            "I am from [Current City].",
-            "I'm originally from [Current City].",
-            "I'm based in [Current City] now, but I grew up in [Birthplace]."
-          ],
-          "expectedTopics": [
-            "origin",
-            "city",
-            "country"
-          ]
+          }
         },
         {
-          "id": "step-2",
+          "id": "lesson6-knowledge-singapore-a",
+          "order": 2,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-3",
+          "id": "lesson6-fill-in-blank",
+          "order": 3,
           "type": "exercise",
-          "exerciseType": "fill_in_blank"
+          "exerciseType": "fill_in_blank",
+          "title": "Fill in the blank",
+          "difficulty": "easy",
+          "data": {
+            "sentenceBefore": "My name is",
+            "sentenceAfter": ".",
+            "options": [
+              "David",
+              "Apple",
+              "Love",
+              "Mother"
+            ],
+            "correctAnswer": "David"
+          }
         },
         {
-          "id": "step-4",
+          "id": "lesson6-matching",
+          "order": 4,
           "type": "exercise",
-          "exerciseType": "matching"
+          "exerciseType": "matching",
+          "title": "Matching",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Match each question with the correct answer.",
+            "pairs": [
+              {
+                "question": "What is your name?",
+                "answer": "My name is David."
+              },
+              {
+                "question": "Where are you from?",
+                "answer": "I'm from Myanmar."
+              },
+              {
+                "question": "What do you do?",
+                "answer": "I am a student."
+              }
+            ]
+          }
         },
         {
-          "id": "step-5",
+          "id": "lesson6-knowledge-singapore-b",
+          "order": 5,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         },
         {
-          "id": "step-6",
+          "id": "lesson6-listen-and-build-sentence",
+          "order": 6,
           "type": "exercise",
-          "exerciseType": "listen_and_build_sentence"
+          "exerciseType": "listen_and_build_sentence",
+          "title": "Listen and build sentence",
+          "difficulty": "easy",
+          "data": {
+            "instruction": "Listen and build the sentence.",
+            "words": [
+              "David",
+              "My",
+              "is",
+              "name"
+            ],
+            "correctOrder": [
+              "My",
+              "name",
+              "is",
+              "David"
+            ]
+          }
         },
         {
-          "id": "step-7",
-          "type": "exercise",
-          "exerciseType": "listen_and_speak"
-        },
-        {
-          "id": "step-8",
+          "id": "lesson6-knowledge-singapore-c",
+          "order": 7,
           "type": "content",
-          "contentType": "knowledge"
+          "contentType": "knowledge",
+          "title": "Do you know about Singapore?",
+          "difficulty": "easy",
+          "data": {
+            "body": "Singapore is a small country in Southeast Asia. It is famous for being clean, safe, and modern. Many people speak English there, and it has many tall buildings, good transportation, and delicious food.",
+            "media": {
+              "images": [
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic1.png",
+                  "alt": "Marina Bay Sands and ArtScience Museum in Singapore"
+                },
+                {
+                  "src": "/img/lesson-1/knowledge_sharing_pic2.png",
+                  "alt": "Merlion statue with Singapore skyline"
+                }
+              ]
+            }
+          }
         }
-      ],
-      "number": 6,
-      "listTitle": "Lesson 6 : Social Conversation"
+      ]
     }
-  ],
-  "welcomeTitle": "Hello! Welcome to Elementary English Class",
-  "welcomeSubtitle": "Let's continue your journey to becoming an English superstar! Which lesson are we tackling today?"
+  ]
 }

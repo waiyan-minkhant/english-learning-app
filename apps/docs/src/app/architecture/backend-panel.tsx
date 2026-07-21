@@ -11,7 +11,7 @@ const apiModules = [
     name: "Auth",
     path: "modules/auth/",
     responsibility:
-      "Register, login, JWT verification. Users store display name. HTTP routes set httpOnly cookies; socket middleware reads the same cookie on connection."
+      "Login, JWT verification. Users store display name. HTTP routes set httpOnly cookies; socket middleware reads the same cookie on connection."
   },
   {
     name: "Session",

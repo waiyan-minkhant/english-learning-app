@@ -11,7 +11,7 @@ const frontendModules = [
     name: "Auth",
     path: "features/auth/",
     responsibility:
-      "Login, register, logout via useAuth. authStore persists the session user (including display name); RequireAuth and RedirectIfAuthenticated guard routes. Syncs TanStack Query auth/me into Zustand."
+      "Login and logout via useAuth. authStore persists the session user (including display name); RequireAuth and RedirectIfAuthenticated guard routes. Syncs TanStack Query auth/me into Zustand."
   },
   {
     name: "Session",
@@ -149,8 +149,8 @@ services/         authService, sessionService, videoService, lessonService`}
         <h3>Routes</h3>
         <ul>
           <li>
-            <strong>/login</strong>, <strong>/register</strong> — auth forms;
-            redirect to dashboard on success
+            <strong>/login</strong> — auth form; redirect to dashboard on
+            success
           </li>
           <li>
             <strong>/dashboard</strong> — media prep (permission + preview),
@@ -176,7 +176,7 @@ services/         authService, sessionService, videoService, lessonService`}
         </p>
         <ul>
           <li>
-            <strong>authService</strong> — register, login, me, logout
+            <strong>authService</strong> — login, me, logout
           </li>
           <li>
             <strong>sessionService</strong> — start and join live sessions

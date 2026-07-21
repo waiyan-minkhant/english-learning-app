@@ -5,11 +5,26 @@ import { useLessonViewModel } from "@/features/lesson/hooks/useLessonViewModel";
 
 type FooterProps = {
   lessonId: string;
+  learningSessionId: string;
+  mode?: "solo" | "classroom";
+  syncedItemId?: string | null;
+  onSyncGoToItem?: (itemId: string) => void;
 };
 
-export function Footer({ lessonId }: FooterProps) {
+export function Footer({
+  lessonId,
+  learningSessionId,
+  mode = "solo",
+  syncedItemId = null,
+  onSyncGoToItem
+}: FooterProps) {
   const { canGoBack, canGoNext, nextButtonLabel, onBack, onNext } =
-    useLessonViewModel(lessonId, { mode: "solo" });
+    useLessonViewModel(lessonId, {
+      mode,
+      learningSessionId,
+      syncedItemId,
+      onSyncGoToItem
+    });
 
   return (
     <footer className="flex items-center justify-between border-t border-border bg-surface px-6 py-4">

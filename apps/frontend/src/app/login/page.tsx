@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SubmitEvent, useState } from "react";
 import type { UseMutationResult } from "@tanstack/react-query";
@@ -99,12 +98,17 @@ function LoginForm({ login }: LoginFormProps) {
             <Button type="submit" disabled={login.isPending}>
               {login.isPending ? "Signing in..." : "Login"}
             </Button>
-            <Text variant="body">
-              No account yet?{" "}
-              <Link href="/register" className="text-primary underline">
-                Register
-              </Link>
-            </Text>
+            <div className="space-y-1">
+              <Text variant="body" tone="muted">
+                Demo accounts (password: password123)
+              </Text>
+              <Text variant="caption" tone="muted">
+                Teacher: teacher@demo.local
+              </Text>
+              <Text variant="caption" tone="muted">
+                Student: student1@demo.local
+              </Text>
+            </div>
           </form>
         </CardContent>
       </Card>

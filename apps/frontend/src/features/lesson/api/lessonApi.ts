@@ -1,16 +1,20 @@
 import { lessonService } from "@/services/lessonService";
-import type { Course, Lesson } from "@/features/lesson/types/Lesson";
+import type {
+  CourseWithLessonSummaries,
+  GetLessonResponse,
+  LessonSummary
+} from "@/features/lesson/types/Lesson";
 
 export const lessonApi = {
-  getCourse(): Course {
+  getCourse(): Promise<CourseWithLessonSummaries> {
     return lessonService.getCourse();
   },
 
-  getLesson(lessonId: string): Lesson {
+  getLesson(lessonId: string): Promise<GetLessonResponse> {
     return lessonService.getLesson(lessonId);
   },
 
-  listLessons(): Lesson[] {
+  listLessons(): Promise<LessonSummary[]> {
     return lessonService.listLessons();
   }
 };

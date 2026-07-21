@@ -5,7 +5,11 @@ import cors from "cors";
 import express from "express";
 import { Server } from "socket.io";
 import { authRouter } from "./modules/auth/routes/auth.routes.js";
+import { classRouter } from "./modules/class/routes/class.routes.js";
+import { courseRouter } from "./modules/learning/routes/course.routes.js";
+import { learningSessionRouter } from "./modules/learning/routes/learning-session.routes.js";
 import { learningRouter } from "./modules/learning/routes/learning.routes.js";
+import { lessonRouter } from "./modules/learning/routes/lesson.routes.js";
 import { attachRealtimeServer } from "./modules/realtime/socket/realtime.socket.js";
 import { sessionRouter } from "./modules/session/routes/session.routes.js";
 import { videoRouter } from "./modules/video/routes/video.routes.js";
@@ -30,8 +34,12 @@ app.get("/health", (_req, res) => {
 
 app.use("/auth", authRouter);
 app.use("/sessions", sessionRouter);
+app.use("/classes", classRouter);
 app.use("/video", videoRouter);
 app.use("/learning", learningRouter);
+app.use("/learning/sessions", learningSessionRouter);
+app.use("/courses", courseRouter);
+app.use("/lessons", lessonRouter);
 
 app.use(errorHandler);
 

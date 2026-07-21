@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { userRoleSchema } from "@english-learning/contracts";
+import { conversationScoresSchema } from "@english-learning/contracts/learning";
 import { roomIdSchema } from "@english-learning/contracts/realtime";
 
 export const joinSessionPayloadSchema = z.object({
@@ -107,6 +108,56 @@ export const joinSessionSuccessPayloadSchema = z.object({
   participantControls: participantControlsMapSchema
 });
 
+export const revealLessonAnswersPayloadSchema = z.object({
+  sessionId: roomIdSchema,
+  learningSessionId: z.string().uuid(),
+  lessonId: z.string().min(1),
+  itemId: z.string().min(1)
+});
+
+export const lessonAnswersRevealedPayloadSchema =
+  revealLessonAnswersPayloadSchema;
+
+export const setLessonItemPayloadSchema = z.object({
+  sessionId: roomIdSchema,
+  learningSessionId: z.string().uuid(),
+  lessonId: z.string().min(1),
+  itemId: z.string().min(1)
+});
+
+export const lessonStateUpdatedPayloadSchema = z.object({
+  learningSessionId: z.string().uuid(),
+  liveSessionRoomId: roomIdSchema,
+  lessonId: z.string().min(1),
+  currentLessonItemId: z.string().nullable(),
+  answerRevealed: z.boolean(),
+  status: z.enum(["live", "ended"])
+});
+
+export const lessonAttemptSubmittedPayloadSchema = z.object({
+  learningSessionId: z.string().uuid(),
+  liveSessionRoomId: roomIdSchema,
+  lessonItemId: z.string().min(1),
+  userId: z.string().uuid(),
+  attemptId: z.string().uuid(),
+  type: z.enum([
+    "conversation",
+    "fill_in_blank",
+    "matching",
+    "listen_and_build_sentence",
+    "listen_and_speak",
+    "listen_and_fill_in_blank"
+  ]),
+  selectedAnswer: z.string().optional(),
+  submittedOrder: z.array(z.string()).optional(),
+  selectedPairs: z.record(z.string(), z.string()).optional(),
+  transcript: z.string().optional(),
+  feedback: z.string().optional(),
+  scores: conversationScoresSchema.optional(),
+  correct: z.boolean().optional(),
+  createdAt: z.string()
+});
+
 export type JoinSessionPayload = z.infer<typeof joinSessionPayloadSchema>;
 export type EndSessionPayload = z.infer<typeof endSessionPayloadSchema>;
 export type SessionEndedPayload = z.infer<typeof sessionEndedPayloadSchema>;
@@ -133,4 +184,17 @@ export type ParticipantControlsUpdatedPayload = z.infer<
 >;
 export type JoinSessionSuccessPayload = z.infer<
   typeof joinSessionSuccessPayloadSchema
+>;
+export type RevealLessonAnswersPayload = z.infer<
+  typeof revealLessonAnswersPayloadSchema
+>;
+export type LessonAnswersRevealedPayload = z.infer<
+  typeof lessonAnswersRevealedPayloadSchema
+>;
+export type SetLessonItemPayload = z.infer<typeof setLessonItemPayloadSchema>;
+export type LessonStateUpdatedPayload = z.infer<
+  typeof lessonStateUpdatedPayloadSchema
+>;
+export type LessonAttemptSubmittedPayload = z.infer<
+  typeof lessonAttemptSubmittedPayloadSchema
 >;

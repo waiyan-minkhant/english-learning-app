@@ -1,92 +1,73 @@
-import type { Lesson } from "@/features/lesson/types/Lesson";
-
-export type LessonProgressSlice = {
-  currentStepIndex: number;
-  completedStepIds: string[];
-};
-
-const DEFAULT_PROGRESS: LessonProgressSlice = {
-  currentStepIndex: 0,
-  completedStepIds: []
-};
+import type { Lesson, LessonSummary, UserLessonProgress } from "@/features/lesson/types/Lesson";
+import type { LessonProgressSlice } from "@/features/lesson/types/Progress";
+import { EMPTY_PROGRESS, progressFromServer } from "@/features/lesson/types/Progress";
 
 export function getProgressSlice(
   progressByLessonId: Record<string, LessonProgressSlice>,
   lessonId: string
 ): LessonProgressSlice {
-  return progressByLessonId[lessonId] ?? DEFAULT_PROGRESS;
+  return progressByLessonId[lessonId] ?? EMPTY_PROGRESS;
 }
 
 export function getLessonProgressPercent(
-  lesson: Lesson,
+  lesson: Lesson | LessonSummary,
   slice: LessonProgressSlice
 ): number {
-  const totalSteps = lesson.steps.length;
-  if (totalSteps === 0) return 0;
+  if (slice.status === "completed") return 100;
 
-  const currentStep = Math.min(
-    Math.max(slice.currentStepIndex, 0),
-    totalSteps - 1
-  );
+  if ("items" in lesson) {
+    const totalItems = lesson.items.length;
+    if (totalItems === 0) return 0;
+    const currentItem = Math.min(
+      Math.max(slice.currentItemIndex, 0),
+      totalItems - 1
+    );
+    return Math.min(100, Math.ceil((currentItem / totalItems) * 100));
+  }
 
-  return Math.min(100, Math.ceil((currentStep / totalSteps) * 100));
+  // Summary-only: coarse progress from status
+  if (slice.status === "in_progress") return 50;
+  return 0;
 }
 
 export function isLessonComplete(
-  lesson: Lesson,
+  lesson: Lesson | LessonSummary,
   slice: LessonProgressSlice
 ): boolean {
-  if (lesson.steps.length === 0) return false;
-
-  const allCompleted = lesson.steps.every((step) =>
-    slice.completedStepIds.includes(step.id)
-  );
-  if (allCompleted) return true;
-
-  const lastStep = lesson.steps[lesson.steps.length - 1];
-  const onLastStep =
-    slice.currentStepIndex >= lesson.steps.length - 1 &&
-    slice.completedStepIds.includes(lastStep.id);
-
-  return onLastStep;
+  return slice.status === "completed";
 }
-
-export function isLessonUnlocked(
-  lessons: Lesson[],
-  index: number,
-  progressByLessonId: Record<string, LessonProgressSlice>
-): boolean {
-  if (index <= 0) return true;
-
-  const previousLesson = lessons[index - 1];
-  if (!previousLesson) return false;
-
-  const previousProgress = getProgressSlice(
-    progressByLessonId,
-    previousLesson.id
-  );
-
-  return isLessonComplete(previousLesson, previousProgress);
-}
-
-export type LessonCardStatus = "locked" | "available" | "in_progress" | "complete";
 
 export function getLessonCardStatus(
-  lesson: Lesson,
+  lesson: LessonSummary,
   index: number,
-  lessons: Lesson[],
+  lessons: LessonSummary[],
   progressByLessonId: Record<string, LessonProgressSlice>
-): LessonCardStatus {
-  if (!isLessonUnlocked(lessons, index, progressByLessonId)) {
-    return "locked";
-  }
-
+): "locked" | "available" | "in_progress" | "complete" {
   const slice = getProgressSlice(progressByLessonId, lesson.id);
+
   if (isLessonComplete(lesson, slice)) return "complete";
 
-  if (slice.completedStepIds.length > 0 || slice.currentStepIndex > 0) {
+  if (index > 0) {
+    const previousLesson = lessons[index - 1];
+    const previousProgress = getProgressSlice(
+      progressByLessonId,
+      previousLesson.id
+    );
+    if (!isLessonComplete(previousLesson, previousProgress)) {
+      return "locked";
+    }
+  }
+
+  if (slice.status === "in_progress" || slice.currentItemIndex > 0) {
     return "in_progress";
   }
 
   return "available";
+}
+
+export function sliceFromGetLesson(
+  lesson: Lesson,
+  progress: UserLessonProgress
+): LessonProgressSlice {
+  return progressFromServer(lesson, progress);
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ConversationAttemptResponse } from "@english-learning/contracts/learning";
 import { Button, Text } from "@/components/ui";
 import { MicrophoneIcon, SpeakerIcon } from "@/components/icons";
-import { ScoreStars } from "@/features/lesson/exercises/conversation/ScoreStars";
+import { ConversationAttemptResult } from "@/features/lesson/exercises/conversation/ConversationAttemptResult";
 import { useAudioPlayer } from "@/features/lesson/hooks/useAudioPlayer";
 import { useAudioRecorder } from "@/features/lesson/hooks/useAudioRecorder";
 import type { DialogueLine } from "@/features/lesson/types/Lesson";
@@ -13,17 +13,21 @@ import { conversationService } from "@/services/conversationService";
 import { cn } from "@/utils/cn";
 
 type ConversationExerciseProps = {
-  exerciseId: string;
+  lessonItemId: string;
   lessonId: string;
   lessonTitle: string;
   title?: string;
-  prompt?: string;
-  dialogueLines?: DialogueLine[];
-  aiSuggestions?: string[];
+  question?: string;
+  dialogue?: DialogueLine[];
+  sampleAnswers?: string[];
   expectedTopics?: string[];
-  sessionId?: string;
+  learningSessionId: string;
   onComplete: () => void;
   disabled?: boolean;
+  sharedResult?: Pick<
+    ConversationAttemptResponse,
+    "transcript" | "scores" | "feedback"
+  > | null;
 };
 
 type UiPhase = "idle" | "submitting" | "result";
@@ -40,36 +44,39 @@ const DEFAULT_SUGGESTIONS = [
 ] as const;
 
 export function ConversationExercise({
-  exerciseId,
+  lessonItemId,
   lessonId,
-  lessonTitle,
+  lessonTitle: _lessonTitle,
   title = "Warm-up Conversation",
-  prompt = "Where are you from?",
-  dialogueLines,
-  aiSuggestions,
-  expectedTopics,
-  sessionId,
+  question = "Where are you from?",
+  dialogue,
+  sampleAnswers,
+  expectedTopics: _expectedTopics,
+  learningSessionId,
   onComplete,
-  disabled
+  disabled,
+  sharedResult = null
 }: ConversationExerciseProps) {
-  const lines = dialogueLines?.length ? dialogueLines : DEFAULT_DIALOGUE;
-  const suggestions = aiSuggestions?.length
-    ? aiSuggestions
+  const lines = dialogue?.length ? dialogue : DEFAULT_DIALOGUE;
+  const suggestions = sampleAnswers?.length
+    ? sampleAnswers
     : [...DEFAULT_SUGGESTIONS];
 
-  const { play } = useAudioPlayer();
+  const { play, error: playError } = useAudioPlayer();
   const recorder = useAudioRecorder();
   const [phase, setPhase] = useState<UiPhase>("idle");
-  const [result, setResult] = useState<ConversationAttemptResponse | null>(
+  const [localResult, setLocalResult] = useState<ConversationAttemptResponse | null>(
     null
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const displayResult = sharedResult ?? localResult;
+  const showingResult = Boolean(displayResult);
   const busy = disabled || phase === "submitting";
   const isRecording = recorder.status === "recording";
 
   async function handleMicClick() {
-    if (busy || phase === "result") return;
+    if (busy || showingResult) return;
     setSubmitError(null);
 
     if (!isRecording) {
@@ -79,7 +86,7 @@ export function ConversationExercise({
 
     const blob = await recorder.stop();
     if (!blob) {
-      setSubmitError("No audio was captured. Please try again.");
+      // recorder.error already explains short/empty capture
       return;
     }
 
@@ -87,15 +94,11 @@ export function ConversationExercise({
     try {
       const response = await conversationService.submitAttempt({
         audio: blob,
-        exerciseId,
+        lessonItemId,
         lessonId,
-        lessonTitle,
-        exerciseTitle: title,
-        question: prompt,
-        sessionId,
-        expectedTopics
+        learningSessionId
       });
-      setResult(response);
+      setLocalResult(response);
       setPhase("result");
       onComplete();
     } catch (error) {
@@ -136,10 +139,12 @@ export function ConversationExercise({
                   aria-label={`Play audio: ${line.text}`}
                   disabled={!line.audioUrl}
                   onClick={() => {
-                    if (line.audioUrl) play(line.audioUrl);
+                    if (line.audioUrl) {
+                      void play(line.audioUrl);
+                    }
                   }}
                   className={cn(
-                    "mt-1.5 inline-flex shrink-0 text-muted-foreground transition-colors",
+                    "pointer-events-auto relative z-30 mt-1.5 inline-flex shrink-0 text-muted-foreground transition-colors",
                     line.audioUrl
                       ? "hover:text-foreground"
                       : "cursor-default opacity-40"
@@ -150,7 +155,7 @@ export function ConversationExercise({
               </div>
             ))}
 
-            {phase !== "result" ? (
+            {!showingResult ? (
               <div className="!mt-10 flex flex-col gap-3 rounded-xl bg-gradient-to-b from-locked-gradient-from to-locked-gradient-to px-5 py-4">
                 <Text variant="label" tone="primary" weight="semibold">
                   AI Suggestion
@@ -167,56 +172,22 @@ export function ConversationExercise({
               </div>
             ) : null}
 
-            {result ? (
-              <div className="!mt-10 space-y-6">
-                <div className="space-y-2">
-                  <Text variant="label" tone="primary" weight="semibold">
-                    Transcript
-                  </Text>
-                  <Text variant="body" tone="default">
-                    {result.transcript}
-                  </Text>
-                </div>
-
-                <div className="space-y-3">
-                  <ScoreStars
-                    label="Answered Question"
-                    score={result.scores.answeredQuestion}
-                  />
-                  <ScoreStars label="Grammar" score={result.scores.grammar} />
-                  <ScoreStars
-                    label="Vocabulary"
-                    score={result.scores.vocabulary}
-                  />
-                  <ScoreStars
-                    label="Sentence Completeness"
-                    score={result.scores.sentenceCompleteness}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Text variant="label" tone="primary" weight="semibold">
-                    Teacher Feedback
-                  </Text>
-                  <Text variant="body" tone="default">
-                    {result.feedback}
-                  </Text>
-                </div>
-              </div>
+            {displayResult ? (
+              <ConversationAttemptResult result={displayResult} />
             ) : null}
           </div>
         </div>
       </div>
 
-      {(recorder.error || submitError) && phase !== "result" ? (
+      {(recorder.error || submitError || playError) && !showingResult ? (
         <div className="mx-auto mt-4 w-full max-w-3xl px-1">
           <Text variant="body" tone="danger">
-            {submitError ?? recorder.error}
+            {submitError ?? recorder.error ?? playError}
           </Text>
         </div>
       ) : null}
 
-      {phase !== "result" ? (
+      {!showingResult ? (
         <div className="flex shrink-0 justify-center pb-2 pt-10">
           <Button
             type="button"

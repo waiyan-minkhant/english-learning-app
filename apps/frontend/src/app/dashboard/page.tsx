@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardContent, Text } from "@/components/ui";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
@@ -116,6 +117,42 @@ function DashboardContent({ user }: { user: SessionUser }) {
           )}
         </CardContent>
       </Card>
+
+      {isTeacher ? (
+        <Card>
+          <CardContent className="flex flex-col gap-4">
+            <Text variant="title" as="h2">
+              Student learning history
+            </Text>
+            <Text variant="body">
+              Review classroom and solo practice attempts for students in your
+              class.
+            </Text>
+            <Link href="/teacher/history">
+              <Button type="button" variant="secondary">
+                View student learning history
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col gap-4">
+            <Text variant="title" as="h2">
+              Solo practice
+            </Text>
+            <Text variant="body">
+              Practice lessons on your own at your own pace—outside of live
+              class.
+            </Text>
+            <Link href="/practice">
+              <Button type="button" variant="secondary">
+                Start solo practice
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {error ? (
         <Text variant="body" tone="danger">

@@ -1,10 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma.js";
 
 export type CreateConversationAttemptInput = {
   userId: string;
   lessonId: string;
-  exerciseId: string;
-  sessionId?: string;
+  lessonItemId: string;
+  learningSessionId: string;
   transcript: string;
   answeredQuestion: number;
   grammar: number;
@@ -15,19 +16,19 @@ export type CreateConversationAttemptInput = {
 
 export class ConversationAttemptRepository {
   create(input: CreateConversationAttemptInput) {
-    return prisma.conversationAttempt.create({
-      data: {
-        userId: input.userId,
-        lessonId: input.lessonId,
-        exerciseId: input.exerciseId,
-        sessionId: input.sessionId,
-        transcript: input.transcript,
-        answeredQuestion: input.answeredQuestion,
-        grammar: input.grammar,
-        vocabulary: input.vocabulary,
-        sentenceCompleteness: input.sentenceCompleteness,
-        feedback: input.feedback
-      }
-    });
+    const data = {
+      userId: input.userId,
+      lessonId: input.lessonId,
+      lessonItemId: input.lessonItemId,
+      learningSessionId: input.learningSessionId,
+      transcript: input.transcript,
+      answeredQuestion: input.answeredQuestion,
+      grammar: input.grammar,
+      vocabulary: input.vocabulary,
+      sentenceCompleteness: input.sentenceCompleteness,
+      feedback: input.feedback
+    } as Prisma.ConversationAttemptUncheckedCreateInput;
+
+    return prisma.conversationAttempt.create({ data });
   }
 }

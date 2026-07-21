@@ -56,6 +56,10 @@ function toLiveSessionResponse(session: {
 }
 
 async function terminateSession(sessionId: string) {
+  const { getLearningSessionService } = await import(
+    "../../learning/services/learning-session.service.js"
+  );
+  await getLearningSessionService().endByRoomId(sessionId);
   await clearPresenceRoom(sessionId);
   await clearParticipantControls(sessionId);
   emitToRoom(sessionId, serverEvents.sessionEnded, { sessionId });
@@ -71,10 +75,22 @@ export async function startSession(teacherId: string) {
     throw new NotFoundError("No class assigned to this teacher");
   }
 
+  const priorLive = await prisma.liveSession.findMany({
+    where: { classId: classRecord.id, status: "live" },
+    select: { id: true }
+  });
+
   await prisma.liveSession.updateMany({
     where: { classId: classRecord.id, status: "live" },
     data: { status: "ended", endedAt: new Date() }
   });
+
+  const { getLearningSessionService } = await import(
+    "../../learning/services/learning-session.service.js"
+  );
+  for (const prior of priorLive) {
+    await getLearningSessionService().endByLiveSessionId(prior.id);
+  }
 
   const session = await prisma.liveSession.create({
     data: {
@@ -125,6 +141,11 @@ export async function endSession(teacherId: string, roomId: string) {
     where: { id: session.id },
     data: { status: "ended", endedAt: new Date() }
   });
+
+  const { getLearningSessionService } = await import(
+    "../../learning/services/learning-session.service.js"
+  );
+  await getLearningSessionService().endByLiveSessionId(session.id);
 }
 
 /** Ends a live session after teacher disconnect timeout (no socket auth). */
@@ -191,6 +212,11 @@ export async function handleJoinSession(
   );
   await broadcastParticipantControls(sessionId);
   const { participantControls } = await getJoinControlsSnapshot(sessionId);
+
+  const { emitLessonStateToSocket } = await import(
+    "../../realtime/services/lesson-sync.service.js"
+  );
+  await emitLessonStateToSocket(socket, sessionId);
 
   ack?.({
     roomId: sessionId,

@@ -2,21 +2,19 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findUnique, create } = vi.hoisted(() => ({
-  findUnique: vi.fn(),
-  create: vi.fn()
+const { findUnique } = vi.hoisted(() => ({
+  findUnique: vi.fn()
 }));
 
 vi.mock("../../../lib/prisma.js", () => ({
   prisma: {
     user: {
-      findUnique,
-      create
+      findUnique
     }
   }
 }));
 
-import { login, register, verifyToken } from "./auth.service.js";
+import { login, verifyToken } from "./auth.service.js";
 
 const teacherId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
@@ -24,37 +22,6 @@ describe("auth.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.JWT_SECRET = "test-secret";
-  });
-
-  describe("register", () => {
-    it("throws when email is already in use", async () => {
-      findUnique.mockResolvedValue({ id: teacherId, email: "a@b.com" });
-
-      await expect(register("a@b.com", "password123")).rejects.toThrow(
-        "Email already in use"
-      );
-      expect(create).not.toHaveBeenCalled();
-    });
-
-    it("creates user and returns token", async () => {
-      findUnique.mockResolvedValue(null);
-      create.mockResolvedValue({
-        id: teacherId,
-        email: "new@example.com",
-        name: "new",
-        role: "student"
-      });
-
-      const result = await register("new@example.com", "password123");
-
-      expect(result.user).toEqual({
-        id: teacherId,
-        email: "new@example.com",
-        name: "new",
-        role: "student"
-      });
-      expect(verifyToken(result.token)).toEqual(result.user);
-    });
   });
 
   describe("login", () => {

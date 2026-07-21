@@ -4,37 +4,60 @@ import { useEffect, useRef, useState } from "react";
 import { Text } from "@/components/ui";
 import { CheckIcon, CloseIcon, SpeakerIcon } from "@/components/icons";
 import { useAudioPlayer } from "@/features/lesson/hooks/useAudioPlayer";
+import { lessonService } from "@/services/lessonService";
+import type { StudentAttemptView } from "@/features/realtime/hooks/useLessonAttemptsSync";
 import { cn } from "@/utils/cn";
 
 const DEFAULT_TITLE = "Listen and fill in the blank";
-const SENTENCE_BEFORE = "I like";
-const SENTENCE_AFTER = ".";
-const OPTIONS = ["David", "Apple", "Myanmar", "Football"] as const;
-const CORRECT_ANSWER = "Football";
-const DEFAULT_AUDIO_URL = "/audio/lesson-1/exercise-7.mp3";
 const REVEAL_DELAY_MS = 500;
 
 type ListenFillBlankExerciseProps = {
+  lessonItemId: string;
+  learningSessionId: string;
   title?: string;
   audioUrl?: string;
+  sentenceBefore?: string;
+  sentenceAfter?: string;
+  options?: string[];
+  correctAnswer?: string;
   onComplete: () => void;
   disabled?: boolean;
+  sharedAttempt?: StudentAttemptView | null;
 };
 
 export function ListenFillBlankExercise({
+  lessonItemId,
+  learningSessionId,
   title = DEFAULT_TITLE,
-  audioUrl = DEFAULT_AUDIO_URL,
+  audioUrl,
+  sentenceBefore,
+  sentenceAfter,
+  options,
+  correctAnswer,
   onComplete,
-  disabled
+  disabled,
+  sharedAttempt = null
 }: ListenFillBlankExerciseProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const completedRef = useRef(false);
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { play } = useAudioPlayer();
+  const { play, error: playError } = useAudioPlayer();
 
-  const isCorrect = selected === CORRECT_ANSWER;
-  const optionsLocked = disabled || revealed;
+  const mirrored = Boolean(sharedAttempt?.selectedAnswer);
+  const displaySelected = mirrored
+    ? (sharedAttempt!.selectedAnswer ?? null)
+    : selected;
+  const displayRevealed = mirrored ? true : revealed;
+
+  const hasData =
+    Boolean(sentenceBefore !== undefined) &&
+    Boolean(sentenceAfter !== undefined) &&
+    Boolean(options?.length) &&
+    Boolean(correctAnswer);
+
+  const isCorrect = displaySelected === correctAnswer;
+  const optionsLocked = disabled || displayRevealed || mirrored;
 
   useEffect(() => {
     return () => {
@@ -44,8 +67,18 @@ export function ListenFillBlankExercise({
     };
   }, []);
 
+  if (!hasData || !options || !correctAnswer) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center pt-2">
+        <Text variant="body" tone="danger">
+          Listen-and-fill-in-the-blank data is missing from the lesson.
+        </Text>
+      </div>
+    );
+  }
+
   function handleSelect(option: string) {
-    if (optionsLocked || completedRef.current) return;
+    if (optionsLocked || completedRef.current || mirrored) return;
     if (selected === option && !revealed) return;
 
     if (revealTimeoutRef.current) {
@@ -59,43 +92,67 @@ export function ListenFillBlankExercise({
     revealTimeoutRef.current = setTimeout(() => {
       setRevealed(true);
 
-      if (option === CORRECT_ANSWER && !completedRef.current) {
-        completedRef.current = true;
-        onComplete();
+      if (!completedRef.current) {
+        const correct = option === correctAnswer;
+        if (correct) {
+          completedRef.current = true;
+        }
+        void lessonService
+          .submitListenFillBlankAttempt(
+            lessonItemId,
+            learningSessionId,
+            option
+          )
+          .then(() => {
+            if (correct) onComplete();
+          })
+          .catch(() => {
+            if (correct) completedRef.current = false;
+          });
       }
     }, REVEAL_DELAY_MS);
   }
 
   function blankTextClass() {
-    if (!selected) return "text-transparent";
-    if (!revealed) return "text-primary";
+    if (!displaySelected) return "text-transparent";
+    if (!displayRevealed) return "text-primary";
     return isCorrect ? "text-success" : "text-danger";
   }
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-10 pt-2">
-      <Text
-        variant="heading"
-        size="title-20"
-        tone="primary"
-        weight="bold"
-        className="text-center"
-      >
-        {title}
-      </Text>
+      <div className="flex flex-col items-center gap-2">
+        <Text
+          variant="heading"
+          size="title-20"
+          tone="primary"
+          weight="bold"
+          className="text-center"
+        >
+          {title}
+        </Text>
+      </div>
 
       <div className="flex w-full items-center gap-4 rounded-xl bg-gradient-to-b from-locked-gradient-from to-locked-gradient-to px-5 py-4 sm:px-6">
         <button
           type="button"
           aria-label="Play audio"
-          onClick={() => play(audioUrl)}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_12px_rgb(255_103_21_/_0.35)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          disabled={!audioUrl}
+          onClick={() => {
+            if (audioUrl) void play(audioUrl);
+          }}
+          className={cn(
+            "pointer-events-auto relative z-30 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_12px_rgb(255_103_21_/_0.35)] transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            audioUrl
+              ? "hover:opacity-90"
+              : "cursor-default opacity-40"
+          )}
         >
           <SpeakerIcon size={22} className="text-primary-foreground" />
         </button>
 
         <p className="text-body-20 font-medium text-foreground">
-          <span>{SENTENCE_BEFORE}</span>
+          <span>{sentenceBefore}</span>
           <span className="mx-2 inline-flex min-w-[4.5rem] flex-col items-center align-baseline">
             <span
               className={cn(
@@ -103,22 +160,22 @@ export function ListenFillBlankExercise({
                 blankTextClass()
               )}
             >
-              {selected ?? "\u00a0"}
+              {displaySelected ?? "\u00a0"}
             </span>
             <span
               className="mt-0.5 w-full border-b border-dashed border-muted-foreground"
               aria-hidden
             />
           </span>
-          <span>{SENTENCE_AFTER}</span>
+          <span>{sentenceAfter}</span>
         </p>
       </div>
 
       <div className="grid w-full grid-cols-2 gap-4">
-        {OPTIONS.map((option) => {
-          const isChosen = selected === option;
-          const isPending = isChosen && !revealed;
-          const showResult = isChosen && revealed;
+        {options.map((option) => {
+          const isChosen = displaySelected === option;
+          const isPending = isChosen && !displayRevealed;
+          const showResult = isChosen && displayRevealed;
           const showCheck = showResult && isCorrect;
           const showCross = showResult && !isCorrect;
 
@@ -174,6 +231,12 @@ export function ListenFillBlankExercise({
           );
         })}
       </div>
+
+      {playError ? (
+        <Text variant="body" tone="danger" className="mt-3 text-center">
+          {playError}
+        </Text>
+      ) : null}
     </div>
   );
 }

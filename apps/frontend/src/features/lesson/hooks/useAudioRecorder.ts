@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AudioRecorderStatus = "idle" | "recording";
 
+const TIMESLICE_MS = 250;
+const MIN_BLOB_BYTES = 2048;
+
 function pickMimeType() {
   if (typeof MediaRecorder === "undefined") return "";
   const candidates = [
@@ -56,7 +59,7 @@ export function useAudioRecorder() {
       };
 
       mediaRecorderRef.current = recorder;
-      recorder.start();
+      recorder.start(TIMESLICE_MS);
       setStatus("recording");
     } catch {
       cleanupStream();
@@ -78,6 +81,11 @@ export function useAudioRecorder() {
         const blob = new Blob(chunksRef.current, { type: mimeType });
         cleanupStream();
         setStatus("idle");
+        if (blob.size < MIN_BLOB_BYTES) {
+          setError("Recording was too short. Please speak a bit longer.");
+          resolve(null);
+          return;
+        }
         resolve(blob.size > 0 ? blob : null);
       };
 

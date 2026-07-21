@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { seedClasses } from "./seeds/classes";
+import { seedLessons } from "./seeds/lessons";
 import { seedLiveSessions } from "./seeds/live-sessions";
 import { seedUsers, type SeededUsers } from "./seeds/users";
 
@@ -32,6 +33,12 @@ async function main() {
     shouldRun(only, "classes") ||
     shouldRun(only, "live-sessions");
 
+  const runLessons =
+    runAll ||
+    shouldRun(only, "lessons") ||
+    shouldRun(only, "classes") ||
+    shouldRun(only, "live-sessions");
+
   const runClasses =
     runAll || shouldRun(only, "classes") || shouldRun(only, "live-sessions");
 
@@ -41,6 +48,10 @@ async function main() {
 
   if (runUsers) {
     users = await seedUsers(prisma);
+  }
+
+  if (runLessons) {
+    await seedLessons(prisma);
   }
 
   if (runClasses) {

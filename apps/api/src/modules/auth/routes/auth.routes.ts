@@ -6,7 +6,6 @@ import { ValidationError } from "../../../shared/errors/validation-error.js";
 import {
   AUTH_COOKIE_NAME,
   login,
-  register,
   verifyToken
 } from "../services/auth.service.js";
 
@@ -20,20 +19,6 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
   maxAge: 7 * 24 * 60 * 60 * 1000
 };
-
-authRouter.post(
-  "/register",
-  asyncHandler(async (req, res) => {
-    const parsed = authCredentialsSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new ValidationError("Validation failed", parsed.error.flatten());
-    }
-
-    const result = await register(parsed.data.email, parsed.data.password);
-    res.cookie(AUTH_COOKIE_NAME, result.token, cookieOptions);
-    res.status(201).json({ user: result.user });
-  })
-);
 
 authRouter.post(
   "/login",

@@ -16,14 +16,26 @@ import { cn } from "@/utils/cn";
 type LessonCardProps = {
   item: LessonListItem;
   onSelect?: (lessonId: string) => void;
+  /** Solo practice: only completed lessons are playable */
+  onlyCompletedSelectable?: boolean;
 };
 
-export function LessonCard({ item, onSelect }: LessonCardProps) {
+export function LessonCard({
+  item,
+  onSelect,
+  onlyCompletedSelectable = false
+}: LessonCardProps) {
   const { lesson, status, progressPercent, displayTitle, displayDescription, number } =
     item;
-  const isLocked = status === "locked";
+  const isComplete = status === "complete";
+  const isLocked =
+    status === "locked" || (onlyCompletedSelectable && !isComplete);
   const isClickable = !isLocked && onSelect;
   const cardStatus = isLocked ? "locked" : "active";
+  const lockLabel =
+    onlyCompletedSelectable && !isComplete && status !== "locked"
+      ? "Complete in class first"
+      : "Locked";
 
   function handleClick() {
     if (!isClickable) return;
@@ -54,9 +66,9 @@ export function LessonCard({ item, onSelect }: LessonCardProps) {
         {isLocked ? (
           <span className={lessonLockedPillVariants()}>
             <LockIcon size={14} className="text-icon" aria-hidden />
-            Locked
+            {lockLabel}
           </span>
-        ) : status === "complete" ? (
+        ) : isComplete ? (
           <div className={lessonCompleteBadgeVariants()}>
             <CheckIcon size={20} className="text-primary" />
           </div>

@@ -6,6 +6,7 @@ import { registerParticipantControlsSocketHandlers } from "../../session/socket/
 import { connectRedis, createRedisPubSubClients } from "../../../shared/redis/redis.client.js";
 import { initializeRealtime } from "../realtime.gateway.js";
 import { registerCursorSocketHandlers } from "./cursor.socket.js";
+import { registerLessonRevealSocketHandlers } from "./lesson-reveal.socket.js";
 import { registerPresenceSocketHandlers } from "./presence.socket.js";
 
 export async function attachRealtimeServer(io: SocketServer) {
@@ -22,5 +23,6 @@ export async function attachRealtimeServer(io: SocketServer) {
     registerParticipantControlsSocketHandlers(socket);
     registerPresenceSocketHandlers(socket);
     registerCursorSocketHandlers(socket);
+    registerLessonRevealSocketHandlers(socket);
   });
 }

@@ -2,8 +2,8 @@ import type { PrismaClient } from "@prisma/client";
 import type { SeededUsers } from "./users";
 
 export const DEMO_LESSON_IDS = {
-  lesson1: "11111111-1111-4111-8111-111111111101",
-  lesson2: "11111111-1111-4111-8111-111111111102"
+  lesson1: "lesson-1",
+  lesson2: "lesson-2"
 } as const;
 
 export const DEMO_CLASS_IDS = {

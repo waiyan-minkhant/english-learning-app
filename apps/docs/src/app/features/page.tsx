@@ -10,7 +10,7 @@ const currentFeatures = [
   {
     title: "Authentication & roles",
     description:
-      "Register, login, and logout with bcrypt password hashing and JWT stored in httpOnly cookies. Users have a display name plus teacher or student roles enforced on REST and socket handlers.",
+      "Login and logout with bcrypt password hashing and JWT stored in httpOnly cookies. Users have a display name plus teacher or student roles enforced on REST and socket handlers. Accounts are seeded for the demo.",
     tags: ["REST", "JWT", "Prisma"]
   },
   {
@@ -75,56 +75,13 @@ const currentFeatures = [
   }
 ];
 
-const upcomingFeatures = [
-  {
-    title: "Room access control",
-    description:
-      "Enforce that only class members can join a session room and receive LiveKit tokens — today any authenticated user who knows a room ID can join."
-  },
-  {
-    title: "Lesson content management",
-    description:
-      "lessonId is stored on Class records but lesson materials, slides, and structured curriculum are not yet implemented in the UI or API."
-  },
-  {
-    title: "Persistent whiteboard",
-    description:
-      "Cursor positions are ephemeral. Saving canvas strokes, annotations, and lesson state across sessions is on the roadmap."
-  },
-  {
-    title: "In-call chat",
-    description:
-      "Text chat alongside video and presence — useful for vocabulary notes and links without interrupting the lesson flow."
-  },
-  {
-    title: "Session recording & playback",
-    description:
-      "LiveKit egress integration to record lessons and let students review sessions after class ends."
-  },
-  {
-    title: "Horizontal scaling hardening",
-    description:
-      "Reconnect and teacher auto-end timers are process-local today. Moving timer state to Redis would make multi-instance API deployments fully safe."
-  },
-  {
-    title: "Frontend polish & E2E tests",
-    description:
-      "The call UI works but needs design consistency. Playwright or similar end-to-end tests and CI deployment pipelines are planned."
-  },
-  {
-    title: "Production deployment",
-    description:
-      "Hosted demo environment with managed Postgres, Redis, and split frontend/API deploys for interview and stakeholder access."
-  }
-];
-
 export default function FeaturesPage() {
   return (
     <div>
       <PageHeader
         eyebrow="Product"
         title="Features"
-        description="What ships today and what is planned next. Current features are production-minded MVPs with clear extension points."
+        description="What ships today. Current features are production-minded MVPs with clear extension points."
       />
 
       <section>
@@ -142,26 +99,6 @@ export default function FeaturesPage() {
               description={feature.description}
               status="live"
               tags={feature.tags}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-14">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-amber-600">
-          Coming soon
-        </h2>
-        <p className="mb-6 text-slate-600">
-          Known gaps and intentional deferrals — not blockers for the core
-          classroom demo.
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {upcomingFeatures.map((feature) => (
-            <FeatureCard
-              key={feature.title}
-              title={feature.title}
-              description={feature.description}
-              status="soon"
             />
           ))}
         </div>

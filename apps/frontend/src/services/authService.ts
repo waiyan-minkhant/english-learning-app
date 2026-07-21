@@ -6,16 +6,6 @@ import {
 } from "@/features/auth/lib/auth";
 
 export const authService = {
-  async register(credentials: LoginRequest): Promise<AuthMeResponse> {
-    return parseAuthMeResponse(
-      await fetchApi("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials)
-      })
-    );
-  },
-
   async login(credentials: LoginRequest): Promise<AuthMeResponse> {
     return parseAuthMeResponse(
       await fetchApi("/auth/login", {

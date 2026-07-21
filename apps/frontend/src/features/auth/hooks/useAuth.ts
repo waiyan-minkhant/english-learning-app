@@ -46,15 +46,6 @@ export function useAuth() {
     }
   });
 
-  const registerMutation = useMutation({
-    mutationFn: (credentials: LoginRequest) =>
-      authService.register(credentials),
-    onSuccess: (data) => {
-      setUser(data.user);
-      queryClient.setQueryData(authQueryKey, data);
-    }
-  });
-
   const logoutMutation = useMutation({
     mutationFn: () => authService.logout(),
     onSuccess: () => {
@@ -70,7 +61,6 @@ export function useAuth() {
     error: query.error,
     refetch: query.refetch,
     login: loginMutation,
-    register: registerMutation,
     logout: logoutMutation
   };
 }

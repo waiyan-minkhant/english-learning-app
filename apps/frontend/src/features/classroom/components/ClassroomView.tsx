@@ -68,9 +68,11 @@ export function ClassroomView({
             <LessonContainer
               mode="classroom"
               sessionId={roomId}
+              socketRef={socketRef}
               selectedLessonId={selectedLessonId}
               onSelectLesson={setSelectedLessonId}
               onChangeLesson={() => setSelectedLessonId(null)}
+              onFinishDemo={() => setSelectedLessonId(null)}
             />
             {selectedLessonId ? (
               <CursorOverlay socketRef={socketRef} roomId={roomId} />

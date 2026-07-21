@@ -20,21 +20,22 @@ import { PuzzleAnswerPiece } from "@/features/lesson/exercises/matching/PuzzleAn
 import { PuzzleDropSlot } from "@/features/lesson/exercises/matching/PuzzleDropSlot";
 import { PuzzleQuestionCap } from "@/features/lesson/exercises/matching/PuzzleQuestionCap";
 import { PUZZLE } from "@/features/lesson/exercises/matching/puzzleGeometry";
+import type { MatchingPair } from "@/features/lesson/types/Lesson";
+import { lessonService } from "@/services/lessonService";
+import type { StudentAttemptView } from "@/features/realtime/hooks/useLessonAttemptsSync";
 import { cn } from "@/utils/cn";
 
 const BANK_ID = "bank";
 const REVEAL_DELAY_MS = 500;
 
-const PAIRS = [
-  { question: "What is your name?", answer: "My name is David." },
-  { question: "Where are you from?", answer: "I'm from Myanmar." },
-  { question: "What do you do?", answer: "I am a student." }
-] as const;
-
 type MatchingExerciseProps = {
+  lessonItemId: string;
+  learningSessionId: string;
   title?: string;
+  pairs?: MatchingPair[];
   onComplete: () => void;
   disabled?: boolean;
+  sharedAttempt?: StudentAttemptView | null;
 };
 
 type DragData = {
@@ -51,14 +52,6 @@ function shuffleAnswers(answers: readonly string[]): string[] {
     next[j] = tmp;
   }
   return next;
-}
-
-function isBoardComplete(placements: Record<string, string>): boolean {
-  return PAIRS.every((pair) => Boolean(placements[pair.question]));
-}
-
-function isBoardCorrect(placements: Record<string, string>): boolean {
-  return PAIRS.every((pair) => placements[pair.question] === pair.answer);
 }
 
 function DraggableAnswer({
@@ -146,19 +139,33 @@ function DroppableBank({
 }
 
 export function MatchingExercise({
+  lessonItemId,
+  learningSessionId,
   title = "Matching",
+  pairs,
   onComplete,
-  disabled
+  disabled,
+  sharedAttempt = null
 }: MatchingExerciseProps) {
+  const pairList = pairs ?? [];
   const [placements, setPlacements] = useState<Record<string, string>>({});
   const [bankOrder, setBankOrder] = useState<string[]>(() =>
-    PAIRS.map((p) => p.answer)
+    pairList.map((p) => p.answer)
   );
   const [activeAnswer, setActiveAnswer] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [pendingReveal, setPendingReveal] = useState(false);
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completedRef = useRef(false);
+
+  const mirrored = Boolean(
+    sharedAttempt?.selectedPairs &&
+      Object.keys(sharedAttempt.selectedPairs).length > 0
+  );
+  const displayPlacements = mirrored
+    ? (sharedAttempt!.selectedPairs ?? {})
+    : placements;
+  const displayRevealed = mirrored ? true : revealed;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -167,11 +174,17 @@ export function MatchingExercise({
     useSensor(KeyboardSensor)
   );
 
-  const locked = Boolean(disabled || revealed || pendingReveal);
+  const locked = Boolean(
+    disabled || displayRevealed || pendingReveal || mirrored
+  );
 
   useEffect(() => {
-    setBankOrder(shuffleAnswers(PAIRS.map((p) => p.answer)));
-  }, []);
+    setBankOrder(shuffleAnswers(pairList.map((p) => p.answer)));
+    setPlacements({});
+    setRevealed(false);
+    setPendingReveal(false);
+    completedRef.current = false;
+  }, [pairList.map((p) => `${p.question}:${p.answer}`).join("|")]);
 
   useEffect(() => {
     return () => {
@@ -181,14 +194,33 @@ export function MatchingExercise({
     };
   }, []);
 
-  const placedAnswers = new Set(Object.values(placements));
+  if (!pairList.length) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center pt-2">
+        <Text variant="body" tone="danger">
+          Matching pairs are missing from the lesson.
+        </Text>
+      </div>
+    );
+  }
+
+  const placedAnswers = new Set(Object.values(displayPlacements));
   const bankAnswers = bankOrder.filter((answer) => !placedAnswers.has(answer));
 
+  function isBoardComplete(next: Record<string, string>): boolean {
+    return pairList.every((pair) => Boolean(next[pair.question]));
+  }
+
+  function isBoardCorrect(next: Record<string, string>): boolean {
+    return pairList.every((pair) => next[pair.question] === pair.answer);
+  }
+
   function questionForAnswer(answer: string): string | undefined {
-    return Object.entries(placements).find(([, a]) => a === answer)?.[0];
+    return Object.entries(displayPlacements).find(([, a]) => a === answer)?.[0];
   }
 
   function scheduleReveal(nextPlacements: Record<string, string>) {
+    if (mirrored) return;
     setPendingReveal(true);
     if (revealTimeoutRef.current) {
       clearTimeout(revealTimeoutRef.current);
@@ -196,9 +228,23 @@ export function MatchingExercise({
     revealTimeoutRef.current = setTimeout(() => {
       setRevealed(true);
       setPendingReveal(false);
-      if (isBoardCorrect(nextPlacements) && !completedRef.current) {
-        completedRef.current = true;
-        onComplete();
+      const correct = isBoardCorrect(nextPlacements);
+      if (!completedRef.current) {
+        if (correct) {
+          completedRef.current = true;
+        }
+        void lessonService
+          .submitMatchingAttempt(
+            lessonItemId,
+            learningSessionId,
+            nextPlacements
+          )
+          .then(() => {
+            if (correct) onComplete();
+          })
+          .catch(() => {
+            if (correct) completedRef.current = false;
+          });
       }
     }, REVEAL_DELAY_MS);
   }
@@ -212,7 +258,7 @@ export function MatchingExercise({
     const { active, over } = event;
     setActiveAnswer(null);
 
-    if (locked || !over) return;
+    if (locked || !over || mirrored) return;
 
     const answer = String(active.id);
     const overId = String(over.id);
@@ -230,7 +276,6 @@ export function MatchingExercise({
       return;
     }
 
-    // Target is a question slot — only empty slots accept drops
     if (placements[overId] && placements[overId] !== answer) return;
 
     const next: Record<string, string> = { ...placements };
@@ -258,21 +303,23 @@ export function MatchingExercise({
       onDragCancel={handleDragCancel}
     >
       <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-10 pt-2 sm:gap-14">
-        <Text
-          variant="heading"
-          size="title-20"
-          tone="primary"
-          weight="bold"
-          className="text-center"
-        >
-          {title}
-        </Text>
+        <div className="flex flex-col items-center gap-2">
+          <Text
+            variant="heading"
+            size="title-20"
+            tone="primary"
+            weight="bold"
+            className="text-center"
+          >
+            {title}
+          </Text>
+        </div>
 
         <div className="flex w-full flex-wrap items-start justify-center gap-5">
-          {PAIRS.map((pair) => {
-            const placed = placements[pair.question];
+          {pairList.map((pair) => {
+            const placed = displayPlacements[pair.question];
             const status =
-              revealed && placed
+              displayRevealed && placed
                 ? placed === pair.answer
                   ? "success"
                   : "error"

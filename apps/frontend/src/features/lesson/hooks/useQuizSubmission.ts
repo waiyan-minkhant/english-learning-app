@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Step } from "@/features/lesson/types/Lesson";
+import type { LessonItem } from "@/features/lesson/types/Lesson";
 import { useLessonStore } from "@/features/lesson/store/lessonStore";
 
-export function useQuizSubmission(currentStep: Step | undefined) {
+export function useQuizSubmission(currentItem: LessonItem | undefined) {
   const quizCanProceed = useLessonStore((state) => state.quizCanProceed);
   const setQuizCanProceed = useLessonStore((state) => state.setQuizCanProceed);
 
@@ -20,8 +20,8 @@ export function useQuizSubmission(currentStep: Step | undefined) {
     setQuizCanProceed(true);
   }, [setQuizCanProceed]);
 
-  const isExercise = currentStep?.type === "exercise";
-  const isContent = currentStep?.type === "content";
+  const isExercise = currentItem?.type === "exercise";
+  const isContent = currentItem?.type === "content";
 
   return {
     isSubmitted: quizCanProceed && isExercise,
