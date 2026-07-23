@@ -5,6 +5,9 @@ import {
   FiCheck,
   FiChevronLeft,
   FiChevronRight,
+  FiCopy,
+  FiEye,
+  FiEyeOff,
   FiHome,
   FiLock,
   FiMessageSquare,
@@ -46,3 +49,6 @@ export const LockIcon = createIcon(FiLock);
 export const MessageIcon = createIcon(FiMessageSquare);
 export const SettingsIcon = createIcon(FiSettings);
 export const UsersIcon = createIcon(FiUsers);
+export const EyeIcon = createIcon(FiEye);
+export const EyeOffIcon = createIcon(FiEyeOff);
+export const CopyIcon = createIcon(FiCopy);
